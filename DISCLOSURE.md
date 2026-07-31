@@ -11,12 +11,12 @@ fact.
 ## 1. Pre-event work in this repository
 
 The following was committed **before** the official 7:00 PM PT build window and is
-**not** offered as judged build-window work:
+**not** offered as judged build-window work — plus local tooling config
+(`CLAUDE.md`, since untracked):
 
 | Path | What it is |
 |---|---|
 | `SPEC.md` | Build specification — architecture, schemas, rule set, tiered plan. Planning, no product code. |
-| `CLAUDE.md` | Working agreements for pair development with Claude Code. Planning, no product code. |
 | `evidence/` | Rules-clearance evidence (Prava support confirmations on sandbox/test-merchant policy). |
 | `spike/spike_checkout.py` | Sandbox validation script — proves the Prava REST checkout seam end to end with hardcoded values. |
 
