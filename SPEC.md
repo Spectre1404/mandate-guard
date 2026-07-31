@@ -97,6 +97,8 @@ Pure functions. Each returns `{ rule_id, name, pass, expected, actual }`. Verdic
 | R6 | window_valid | now < `created_at + effective_minutes` and `status == confirmed` |
 | R7 | single_use | `status != consumed` (and not revoked/expired) |
 
+**R5 note:** Prava's own API does NOT enforce this — `create-session` explicitly allows `total_amount` to exceed the line-item sum for tax/shipping/fees. R5 is deliberately stricter than the network layer; padded "fees" are a primary drift vector. This is a product feature, not redundancy.
+
 **Executor pre-check (second gate, inside Checkout Executor, before card entry):**
 - E1: storefront page total == Prava session `total_amount`
 - E2: storefront host == mandate merchant host
@@ -158,7 +160,7 @@ Genesis: first event's `prev_hash` = `mandate_hash`.
 Flow: open `iframe_url` in the user's browser → user selects sandbox Visa test card → real WebAuthn passkey prompt.
 
 **GET /v1/sessions/{id}/payment-result** — poll every 2s, back off to 5s, 3-minute timeout:
-- Status machine: `pending → awaiting_result → completed | failed`
+- Status machine: `pending → processing → awaiting_result → completed | failed`. The docs disagree on whether `processing` appears (`/concepts/checkout-flow.md` documents it — card entry, OTP, passkey in progress; `/api-reference/get-payment-result.md` omits it from the enum), so the poller treats `processing` as a normal transient state and logs-without-erroring on any unknown status.
 - Credentials (`token`, `dynamic_cvv`, expiry) appear **only while `awaiting_result`** — grab from `transactions[].line_items[]`, hold in memory only
 - Log each status transition as a ledger event; `error {code,message}` present on failure
 
@@ -169,11 +171,13 @@ Flow: open `iframe_url` in the user's browser → user selects sandbox Visa test
 - Record `visa_confirmation` (SUCCESS/FAILURE) in the ledger — the card-network acknowledgment closes the chain
 - One-time mandate is consumed on APPROVED → ledger `MANDATE_CONSUMED`
 
+**GET /health** — quota-free connectivity check (`{"status":"ok","timestamp":…}`). Use it at app startup and before any deliberate sandbox checkpoint instead of burning a session to prove reachability.
+
 **Full doc index for Claude Code:** `https://docs.prava.space/llms.txt`
 
 ## 6. Demo storefront spec ("Beanline Coffee" or similar — deliberately boring)
 
-- 3 products with stable `product_id`s (one is the mandate target), single catalog page, cart, guest checkout form (card number, expiry, CVV, name)
+- 3 products with stable `product_id`s (one is the mandate target), single catalog page, cart, guest checkout form (card number, expiry, CVV, name). **`product_id`s must be ≤50 characters** — Prava's `product_details[].product_id` caps at 50.
 - Mock processor endpoint: validates card format (Luhn + Visa prefix), returns `authorization_code` + `response_code`, persists order, renders a **confirmation page with an order number** — this page is the completed-checkout proof the handbook demands; executor screenshots it
 - **Drift toggle (admin route, visible on camera):** perturbs state honestly for the fail demo — e.g. raises a price server-side or swaps the product the agent is steered toward. Disclosed on screen as a simulated agent/merchant error injection. Never fake the agent's output silently.
 - Storefront is disclosed plainly in the submission: sandbox test cards cannot clear a real merchant's processor, so the merchant is self-hosted; every Prava-side step (session, passkey, token issuance, report-status, visa_confirmation) is real sandbox end to end.
@@ -222,7 +226,7 @@ mandate-guard/
 **Tier 2 — stretch only if Tier 1 is green:**
 - **(a) Real-merchant declined-run** (Prava team confirmed, Jul 30: a test-card transaction at a live merchant will decline at checkout — expected sandbox behavior and acceptable to demo). Full flow against a real guest-checkout merchant → processor declines → `report-status: DECLINED` → ledger records the complete attempted transaction. Proves the executor generalizes beyond the demo store and exercises the failure path on real rails. Limit to 1–2 attempts (unpublished quota + merchant courtesy). DECLINED does not consume the one-time mandate, so the mandate stays active afterward.
 - **(b) Production access request** (dashboard + email support@prava.space, Aug 1 morning, include project name) only if a real *completed* purchase is wanted for the video — bonus, never a dependency.
-- **(c) Standing-mandate mode** (only if far ahead of schedule): Prava exposes standing mandates (`/concepts/mandates.md`, `mandate-charge`, `mandate-list`, `mandate-report`) — approve once by passkey, agent charges later **with no passkey per charge**. That is the regime where Mandate Guard matters most: the gate + ledger become the only per-charge control. Gate every `mandate-charge` the same way sessions are gated. Mention this in the submission narrative regardless of whether it's built.
+- **(c) Standing-mandate mode** (only if far ahead of schedule): Prava exposes standing mandates (`/concepts/mandates.md`, `mandate-charge`, `mandate-list`, `mandate-report`) — approve once by passkey, agent charges later **with no passkey per charge**. **There is no `POST /v1/mandates`:** a standing mandate is created via `POST /v1/sessions` with a `mandate_setup` block (`intent: "mandate_setup"`) — authorize-only, returns `authorizeOnly: true` and **no credentials** — and is charged afterward via `mandate-charge`. That is the regime where Mandate Guard matters most: the gate + ledger become the only per-charge control. Gate every `mandate-charge` the same way sessions are gated. Mention this in the submission narrative regardless of whether it's built.
 
 **Sun 11 AM → 3 PM CT:** demo video, README, DISCLOSURE.md, submission form, buffer. Submit two hours early. Non-negotiable.
 
@@ -249,6 +253,7 @@ mandate-guard/
 
 - **"Prava already has Guardrails — why Mandate Guard?"** Prava's Guardrails (`/concepts/guardrails.md`) are account/agent-level spend controls enforced at payment time. Mandate Guard verifies **per-purchase intent fidelity** — this specific cart against this user's confirmed mandate — *before* a session exists, and produces the exportable dispute-evidence artifact afterward. Complementary layers: their controls constrain spend; ours proves authorization.
 - **"Prava's Browser Harness already confirms the true total before charging."** It does — at charge time, against the order. Mandate Guard verifies against the **user's mandate** (intent), upstream of session creation, and records the entire chain as evidence. Our executor pre-check mirroring their harness is convergent design — say so openly.
+- **"Isn't the total already checked by the payment API?"** No. `create-session` explicitly allows `total_amount` to exceed the sum of line items so merchants can add tax, shipping, and fees — Prava does not enforce line-item consistency, and it shouldn't, because legitimate carts need that slack. Mandate Guard's R5 is deliberately stricter than the network layer: it requires `proposed_total` to equal Σ(unit_price × quantity) against the user's mandate. Padded "fees" are a primary drift vector — the cart the user approved, charged at a number they never saw. This is a product feature, not redundancy.
 - **"Won't AP2 solve this?"** AP2 specifies mandate data formats but requires ecosystem-wide adoption and ships no adjudication artifact. Mandate Guard works today on card rails via Prava; when AP2 matures, the ledger maps onto its mandate objects — an evidence layer on top of the protocol, not a competitor to it.
 
 ## 15. Open items (resolve before Friday)
