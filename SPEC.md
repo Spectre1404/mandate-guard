@@ -131,7 +131,7 @@ Genesis: first event's `prev_hash` = `mandate_hash`.
 3. `AGENT_PROPOSAL` — full proposal + agent_meta
 4. `GATE_VERDICT` — per-rule results array + verdict
 5. `GATE_BLOCKED` — (fail path terminal event; no session follows)
-6. `SESSION_CREATED` — session_id, order_id, expires_at, `external_order_ref` (= mandate_hash), full `purchase_context` echo
+6. `SESSION_CREATED` — session_id, order_id, expires_at, the **full `external_order_ref` verbatim** (`{mandate_hash}.{attempt:02d}`) **and the `attempt` number as its own field**, full `purchase_context` echo
 7. `APPROVAL_OBSERVED` — poll transition into `awaiting_result` (implies passkey approval) + ts
 8. `CREDENTIALS_RECEIVED` — txn_ref_id, token **last 4 only**, expiry_month/year. **Never the full token or dynamic CVV.**
 9. `EXECUTION_PRECHECK` — E1–E3 results
@@ -152,10 +152,18 @@ Genesis: first event's `prev_hash` = `mandate_hash`.
 - `purchase_context[0].merchant_details` ← mandate merchant (name, https url, country_code_iso2)
 - `purchase_context[0].product_details[]` ← verified line items (description, unit_price, product_id, quantity)
 - `purchase_context[0].effective_until_minutes` ← mandate `effective_minutes`
-- `external_order_ref` ← **mandate_hash** (64 hex chars, fits 255 limit) — ties Prava's records to the evidence chain
+- `external_order_ref` ← **`{mandate_hash}.{attempt:02d}`** (67 chars, fits the 255 limit) — the full 64-hex hash stays a greppable prefix tying Prava's records to the evidence chain, and the attempt suffix makes retries legal. **Prava enforces `external_order_ref` uniqueness per merchant, permanently — it is effectively an idempotency key.** Discovered empirically via an undocumented `409 DUPLICATE_EXTERNAL_ORDER_REF` (Jul 31 spike); a bare `mandate_hash` would allow exactly one session per mandate for all time, making any retry after a failed passkey, an expired session, or a decline impossible. The per-mandate attempt counter is persisted in the DB and incremented on every session-create for that mandate. Attempt history is itself evidence: the ledger shows how many times execution was attempted.
 - `integration_type: "full_checkout"` (hosted redirect; simplest solo path)
 - **Omit `callback_url`** (optional per docs) — rely on polling
 - Errors to handle: `VAL_2001` (surface field details), `429 TRIES_EXHAUSTED` (sandbox quota — back off, alert loudly). Quota size/reset is unpublished; if hit, email support@prava.space with the sanitized error, timestamp + timezone, environment, and `X-Response-ID` — they reply within minutes and can reset the allowance. All routine iteration runs against `fake_prava/` precisely to avoid this.
+
+**Observed-but-undocumented behaviors (Jul 31 spike — none of these appear in `/api-reference/errors.md`):**
+- `409 DUPLICATE_EXTERNAL_ORDER_REF` on `POST /v1/sessions` — `external_order_ref` reuse for the same merchant. Costs no session quota (rejected before creation). Drives the attempt-suffix mapping above.
+- `AUTH_FAILED` (`{code, message: "Authentication failed due to errors."}`) as a **transaction-level** `error` on `payment-result` — the cardholder's OTP/passkey step failed. Session status goes `pending → failed` with no credentials ever issued; the session is terminal and cannot be retried.
+- **One session can accumulate multiple `transactions[]` entries** (two observed, after a retried passkey attempt). Credential scanning must take the **newest** transaction by `txn_id` (ULID, so lexicographic descending = newest first), never the first.
+- **`transactions[].status` and `line_items[].status` can disagree** — a `failed` transaction held a `pending` line item. Credential-readiness must key off `token`/`dynamic_cvv` presence, not line-item status.
+- `expiry_year` returns **4 digits** (`"2027"`), not 2.
+- Ids observed as `ses_`/`ord_`/`txn_`/`tli_` + ULID (the docs' `sess_` prefix is stale), and `iframe_url` on `sandbox.collect.prava.space?session=<session_id>`.
 
 Flow: open `iframe_url` in the user's browser → user selects sandbox Visa test card → real WebAuthn passkey prompt.
 
@@ -200,7 +208,7 @@ Flow: open `iframe_url` in the user's browser → user selects sandbox Visa test
 - Backend: **FastAPI** (Python) — compiler, gate, ledger, Prava client, executor orchestration
 - Frontend: **Next.js/React** (Claude Code builds) — three screens that must look good: mandate card, gate verdict panel (named checks, green/red), ledger browser + export button. Everything else minimal.
 - DB: **Supabase Postgres** (mandates, proposals, ledger, storefront orders)
-- **fake_prava/** dev server mirroring the three endpoints — all local iteration runs against it to protect the `TRIES_EXHAUSTED` sandbox quota; real sandbox runs are deliberate integration checkpoints only; the fake NEVER appears in the demo or video
+- **fake_prava/** dev server mirroring the three endpoints — all local iteration runs against it to protect the `TRIES_EXHAUSTED` sandbox quota; real sandbox runs are deliberate integration checkpoints only; the fake NEVER appears in the demo or video. **It must reproduce the observed-but-undocumented behaviors in §5**, including rejecting a reused `external_order_ref` with `409 DUPLICATE_EXTERNAL_ORDER_REF` — otherwise the attempt-counter logic goes untested until it fails against the real sandbox.
 - OpenAI credit allocation: small model for mandate parsing · stronger model for agent shopping reasoning · narrative section in export
 - Secrets in `.env` only; sandbox test card numbers never in the repo or README; no commit trailers
 
@@ -224,7 +232,7 @@ mandate-guard/
 3. Drift path + drift toggle · 4. Evidence export JSON + PDF · 5. Ledger browser + live verify-chain button · 6. Mandate lifecycle dashboard (active/consumed/expired) · 7. Failure handling as first-class UX (declined card → report DECLINED path, expired mandate) · 8. Substitution policy + fuzzy matching · 9. PDF polish
 
 **Tier 2 — stretch only if Tier 1 is green:**
-- **(a) Real-merchant declined-run** (Prava team confirmed, Jul 30: a test-card transaction at a live merchant will decline at checkout — expected sandbox behavior and acceptable to demo). Full flow against a real guest-checkout merchant → processor declines → `report-status: DECLINED` → ledger records the complete attempted transaction. Proves the executor generalizes beyond the demo store and exercises the failure path on real rails. Limit to 1–2 attempts (unpublished quota + merchant courtesy). DECLINED does not consume the one-time mandate, so the mandate stays active afterward.
+- **(a) Real-merchant declined-run** (Prava team confirmed, Jul 30: a test-card transaction at a live merchant will decline at checkout — expected sandbox behavior and acceptable to demo). Full flow against a real guest-checkout merchant → processor declines → `report-status: DECLINED` → ledger records the complete attempted transaction. Proves the executor generalizes beyond the demo store and exercises the failure path on real rails. Limit to 1–2 attempts (unpublished quota + merchant courtesy). DECLINED does not consume the one-time mandate, so the mandate stays active afterward. **Still valid under attempt-scoped `external_order_ref`s:** the declined run increments the mandate's attempt counter, so a subsequent session for the same mandate uses `.02` and does not collide with the `409 DUPLICATE_EXTERNAL_ORDER_REF` rule. Under the old bare-`mandate_hash` mapping this stretch goal was impossible.
 - **(b) Production access request** (dashboard + email support@prava.space, Aug 1 morning, include project name) only if a real *completed* purchase is wanted for the video — bonus, never a dependency.
 - **(c) Standing-mandate mode** (only if far ahead of schedule): Prava exposes standing mandates (`/concepts/mandates.md`, `mandate-charge`, `mandate-list`, `mandate-report`) — approve once by passkey, agent charges later **with no passkey per charge**. **There is no `POST /v1/mandates`:** a standing mandate is created via `POST /v1/sessions` with a `mandate_setup` block (`intent: "mandate_setup"`) — authorize-only, returns `authorizeOnly: true` and **no credentials** — and is charged afterward via `mandate-charge`. That is the regime where Mandate Guard matters most: the gate + ledger become the only per-charge control. Gate every `mandate-charge` the same way sessions are gated. Mention this in the submission narrative regardless of whether it's built.
 
@@ -262,6 +270,6 @@ mandate-guard/
 - [x] Birdie answers (Jul 29): sandbox requires test merchant ✓ · self-built disclosed storefront explicitly acceptable ✓ · TRIES_EXHAUSTED quota unpublished, support resets via email within minutes ✓ · production access: request via dashboard + email support@prava.space from registered email with project name ✓
 - [ ] Screenshot the Birdie Discord exchange → save for DISCLOSURE.md / submission
 - [ ] Tier 2 only: submit production-access request Aug 1 morning (dashboard + email, include project name "Mandate Guard by Rakesh") so unknown review time runs in parallel — treat as bonus footage, never a dependency
-- [ ] Passkey enrolled on demo machine (Mac Touch ID; pick Chrome or Safari and test WebAuthn once)
+- [x] Passkey enrolled on demo machine (Jul 31): **demo browser is Chrome** — Safari failed passkey creation twice in the embedded enrollment frame (surfaced as transaction-level `AUTH_FAILED`, two dead transactions on one session). Record and demo in Chrome only.
 - [ ] Pick storefront name + 3 products (with product_ids) — cosmetic, 10 minutes
 - [ ] Tracks to enter on Devfolio: Open, OpenAI, Visa, Localhost (skip Linq, NANDA, Senso)
