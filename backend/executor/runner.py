@@ -17,6 +17,12 @@ client's in-memory shape (`_token`, `_dynamic_cvv`), are passed straight to
 `page.fill`, and are never logged, returned, screenshotted, or written to the
 ledger. Playwright tracing is off for the whole run precisely because a trace
 would capture the typed values.
+
+Scope: this class drives the page and proves what happened. It does NOT talk to
+Prava. `execute` returns the confirmation facts (order number, authorization
+code, response code, screenshot hash) and the orchestrator owns the whole Prava
+conversation, including report-status and the STATUS_REPORTED event -- one object
+holds the payment conversation rather than two.
 """
 
 import hashlib
@@ -92,6 +98,7 @@ class CheckoutExecutor:
         mandate_id=None,
         screenshot_dir=DEFAULT_SCREENSHOT_DIR,
         clock=_now_iso,
+        origin_map=None,
     ):
         """`page` is an already-open Playwright page.
 
@@ -105,6 +112,7 @@ class CheckoutExecutor:
         self.mandate_id = mandate_id
         self.screenshot_dir = screenshot_dir
         self.clock = clock
+        self.origin_map = origin_map
 
     def _record(self, event_type, payload):
         if self.ledger is None:
@@ -129,7 +137,7 @@ class CheckoutExecutor:
     def run_precheck(self, mandate, proposal, session_total):
         """E1-E3 against the rendered page. Ledgers the result either way."""
         observation = observe_checkout_page(self.page)
-        result = precheck(observation, proposal, mandate, session_total)
+        result = precheck(observation, proposal, mandate, session_total, self.origin_map)
 
         self._record(
             "EXECUTION_PRECHECK",
@@ -139,6 +147,9 @@ class CheckoutExecutor:
                 "failed_rule_ids": result["failed_rule_ids"],
                 "observation": observation,
                 "session_total": session_total,
+                # Canonical URL, declared origin, observed host -- the mapping is
+                # disclosed in the evidence rather than buried in config.
+                "origin_disclosure": result["origin_disclosure"],
             },
         )
         if result["verdict"] != "PASS":
@@ -194,28 +205,3 @@ class CheckoutExecutor:
 
         self._record("CHECKOUT_EXECUTED", confirmation)
         return confirmation
-
-    def report(self, client, session_id, credentials, confirmation, approved=True):
-        """Report the outcome to Prava and ledger the Visa confirmation.
-
-        Always called after a token is used, per Prava's docs -- APPROVED on a
-        storefront success, DECLINED if the token was used and checkout failed.
-        """
-        report = client.report_status(
-            session_id,
-            credentials["txn_ref_id"],
-            "APPROVED" if approved else "DECLINED",
-            authorization_code=confirmation.get("authorization_code") if approved else None,
-            response_code=confirmation.get("response_code") if approved else "05",
-        )
-        self._record(
-            "STATUS_REPORTED",
-            {
-                "txn_ref_id": report.get("txn_ref_id"),
-                "txn_status": report.get("txn_status"),
-                "visa_confirmation": report.get("visa_confirmation"),
-                "authorization_code": confirmation.get("authorization_code") if approved else None,
-                "response_code": confirmation.get("response_code") if approved else "05",
-            },
-        )
-        return report

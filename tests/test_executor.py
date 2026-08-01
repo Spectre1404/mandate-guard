@@ -24,6 +24,7 @@ from backend.executor.runner import (
     sha256_file,
 )
 from backend.ledger.chain import new_ledger, verify_chain
+from backend.origins import build_origin_map
 from storefront import catalog as catalog_module
 
 MANDATE_HASH = "e" * 64
@@ -117,26 +118,18 @@ def _luhn_visa():
 
 
 @pytest.fixture
-def mandate(mandate, storefront_url):
-    """The mandate must name the merchant the executor actually visits.
+def origin_map(storefront_url):
+    """The mandate keeps its canonical https URL; the store is served locally.
 
-    E2 compares the storefront's host against the mandate's merchant host, and it
-    is supposed to fail when they differ -- that is the redirect/wrong-merchant
-    defense. So the demo mandate has to carry the storefront's real origin rather
-    than a placeholder domain.
+    This is the declared-origin mapping: E2 compares the observed page against
+    the origin Beanline is actually served from, and all three values land in the
+    EXECUTION_PRECHECK event so the substitution is visible in the evidence.
     """
-    mandate["constraints"]["merchant"]["url"] = storefront_url
-    return mandate
+    return build_origin_map({"Beanline Coffee": storefront_url})
 
 
 @pytest.fixture
-def proposal(proposal, storefront_url):
-    proposal["merchant"]["url"] = storefront_url
-    return proposal
-
-
-@pytest.fixture
-def executor(page, storefront_url, tmp_path):
+def executor(page, storefront_url, tmp_path, origin_map):
     ledger = new_ledger(MANDATE_HASH)
     return CheckoutExecutor(
         page=page,
@@ -144,6 +137,7 @@ def executor(page, storefront_url, tmp_path):
         ledger=ledger,
         mandate_id="m1",
         screenshot_dir=str(tmp_path / "shots"),
+        origin_map=origin_map,
     )
 
 
@@ -342,45 +336,56 @@ def test_declined_card_raises_rather_than_inventing_a_confirmation(
         )
 
 
-# --- report-status ----------------------------------------------------------
+# --- declared origin mapping ------------------------------------------------
 
 
-def test_report_forwards_the_processor_codes_and_ledgers_visa_confirmation(
-    executor, mandate, proposal, credentials
+def test_precheck_passes_under_the_declared_origin_mapping(executor, mandate, proposal):
+    """The mandate says beanline.example.com; the page is on 127.0.0.1 -- and that
+    is fine, because the mapping declares it. The canonical URL is untouched."""
+    executor.build_cart(proposal)
+
+    result = executor.run_precheck(mandate, proposal, session_total="27.00")
+
+    assert result["verdict"] == "PASS"
+    assert mandate["constraints"]["merchant"]["url"] == "https://beanline.example.com"
+
+
+def test_wrong_origin_still_fails_e2_under_the_mapping(
+    page, storefront_url, tmp_path, mandate, proposal
 ):
-    confirmation = executor.execute(
-        mandate, proposal, credentials, session_total="27.00", cardholder_name=CARDHOLDER
+    """The mapping redirects the comparison; it must not relax it.
+
+    Beanline is declared as served from somewhere else entirely, so the page the
+    executor is standing on is not the declared origin and E2 must refuse.
+    """
+    executor = CheckoutExecutor(
+        page=page,
+        storefront_url=storefront_url,
+        ledger=new_ledger(MANDATE_HASH),
+        mandate_id="m1",
+        screenshot_dir=str(tmp_path / "shots"),
+        origin_map=build_origin_map({"Beanline Coffee": "https://someone-elses-shop.test"}),
     )
-    sent = {}
+    executor.build_cart(proposal)
 
-    class StubClient:
-        def report_status(self, session_id, txn_ref_id, txn_status, **kwargs):
-            sent.update(
-                session_id=session_id, txn_ref_id=txn_ref_id, txn_status=txn_status, **kwargs
-            )
-            return {
-                "status": "confirmed",
-                "txn_ref_id": txn_ref_id,
-                "txn_status": txn_status,
-                "visa_confirmation": "SUCCESS",
-            }
+    with pytest.raises(ExecutionAborted) as exc:
+        executor.run_precheck(mandate, proposal, session_total="27.00")
 
-    report = executor.report(StubClient(), "ses_x", credentials, confirmation)
-
-    assert sent["txn_status"] == "APPROVED"
-    assert sent["authorization_code"] == confirmation["authorization_code"]
-    assert sent["response_code"] == "00"
-    assert report["visa_confirmation"] == "SUCCESS"
-    assert executor.ledger["events"][-1]["type"] == "STATUS_REPORTED"
-    assert executor.ledger["events"][-1]["payload"]["visa_confirmation"] == "SUCCESS"
+    assert "E2" in exc.value.precheck_result["failed_rule_ids"]
 
 
-def test_reporting_declined_sends_response_code_05(executor, credentials):
-    class StubClient:
-        def report_status(self, session_id, txn_ref_id, txn_status, **kwargs):
-            return {"txn_ref_id": txn_ref_id, "txn_status": txn_status, "visa_confirmation": "SUCCESS", **kwargs}
+def test_the_origin_mapping_is_disclosed_in_the_ledger(executor, mandate, proposal, storefront_url):
+    """All three values are in evidence, so the substitution is not hidden."""
+    executor.build_cart(proposal)
+    executor.run_precheck(mandate, proposal, session_total="27.00")
 
-    report = executor.report(StubClient(), "ses_x", credentials, {}, approved=False)
+    disclosure = executor.ledger["events"][0]["payload"]["origin_disclosure"]
 
-    assert report["txn_status"] == "DECLINED"
-    assert report["response_code"] == "05"
+    assert disclosure["canonical_merchant_url"] == "https://beanline.example.com"
+    assert disclosure["declared_origin"] == storefront_url
+    assert disclosure["observed_host"] == "127.0.0.1"
+
+
+def test_executor_does_not_talk_to_prava(executor):
+    """Reporting belongs to the orchestrator; the executor only drives the page."""
+    assert not hasattr(executor, "report")

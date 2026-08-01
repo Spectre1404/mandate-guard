@@ -86,6 +86,25 @@ transaction.'" That exchange is captured in `evidence/`.
 Every Prava-side step is real sandbox, end to end: session creation, passkey
 approval, credential issuance, `report-status`, and the returned Visa confirmation.
 
+### Declared origin mapping
+
+Prava requires `merchant_details.url` to use **https** and forwards it to Visa as
+the merchant of record, so the mandate carries the canonical
+`https://beanline.example.com`. The demo storefront is self-hosted and actually
+served from a local origin (e.g. `http://127.0.0.1:8200`).
+
+Rather than weaken the executor's pre-check or put a false URL in the mandate, the
+substitution is explicit: a configured mapping declares which origin serves a given
+merchant, and pre-check **E2** verifies the observed page host against that
+*declared origin*. The mapping redirects the comparison; it does not relax it — a
+page served from any other host still fails E2, and there is a test for exactly
+that case.
+
+All three values — the canonical merchant URL, the declared origin, and the
+observed host — are written into every `EXECUTION_PRECHECK` ledger event, so the
+mapping is disclosed inside the evidence record itself rather than living only in
+configuration.
+
 ## 6. Credential handling
 
 Full payment tokens and dynamic CVVs exist in memory only. They are never persisted,
