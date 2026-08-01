@@ -1,0 +1,9 @@
+# Runtime
+fastapi
+uvicorn
+requests
+openai            # compiler extraction, agent rationale, export narrative only
+playwright        # checkout executor + PDF export
+
+# Dev
+pytest
