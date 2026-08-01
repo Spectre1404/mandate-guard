@@ -22,6 +22,20 @@ on these):
     #chain-verdict                overall VERIFIED / BROKEN text
     #export-json  #export-pdf     export buttons
     #outcome-banner               happy / blocked summary banner
+    #mandate-summary              dashboard counts strip
+    [data-count="<NAME>"]         individual count tile
+    #mandate-list                 mandates index table
+    [data-mandate-row]            one per mandate, with data-mandate-hash
+    [data-status]                 derived mandate STATUS chip
+    [data-last-outcome]           derived last-attempt outcome chip
+    #constraints-card             mandate detail constraints
+    #lifecycle-timeline           that mandate's events in causal order
+    #attempt-history              per-attempt table with external_order_ref
+    #derived-footer               "derived entirely from the hash-chained ledger"
+
+The dashboard holds NO state of its own: every status and field is derived from
+ledger events on disk by backend/ledger/lifecycle.py, so the view cannot disagree
+with the record. The clock is injectable (CLOCK) because EXPIRED is time-derived.
 
 Run:  .venv/bin/uvicorn ledger_ui.app:app --port 8300
 """
@@ -35,6 +49,7 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from backend.export.evidence import build_evidence, write_narrative
 from backend.export.pdf import export_packet
 from backend.ledger.chain import verify_chain
+from backend.ledger.lifecycle import project_all, summary_counts
 from backend.ledger.store import LEDGER_SUFFIX, list_ledgers, load_ledger, summarize
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -42,6 +57,16 @@ LEDGER_DIR = os.environ.get("MANDATE_GUARD_LEDGER_DIR", os.path.join(REPO_ROOT, 
 EXPORT_DIR = os.environ.get("MANDATE_GUARD_EXPORT_DIR", os.path.join(REPO_ROOT, "evidence", "exports"))
 
 app = FastAPI(title="Mandate Guard — Ledger")
+
+
+def _utcnow():
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc)
+
+
+# Injectable so EXPIRED, which is time-derived, is testable.
+CLOCK = _utcnow
 
 
 STYLE = """
@@ -70,14 +95,71 @@ STYLE = """
   .empty{background:#f6f7f9;border:1px dashed #c9ccd4;border-radius:10px;padding:28px;
          text-align:center;color:#5b6270}
   code{font-family:'SF Mono',Menlo,monospace;font-size:12.5px}
+  nav{display:flex;gap:18px;margin:0 0 22px;font-size:14px}
+  nav a{color:#5b6270;text-decoration:none;font-weight:600}
+  nav a.on{color:#16181d;border-bottom:2px solid #16181d;padding-bottom:2px}
+  .tiles{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 24px}
+  .tile{border:1px solid #e3e5ea;border-radius:10px;padding:12px 18px;min-width:104px}
+  .tile .n{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+  .tile .k{font-size:11px;color:#5b6270;text-transform:uppercase;letter-spacing:.05em}
+  .chip{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;
+        font-weight:700;letter-spacing:.03em}
+  .chip.ACTIVE{background:#e8f0fe;color:#174ea6}
+  .chip.CONSUMED{background:#e8f6ec;color:#146c2e}
+  .chip.EXPIRED{background:#f1f3f4;color:#5b6270}
+  .chip.DRAFT{background:#fef7e0;color:#8a6100}
+  .chip.COMPLETED{background:#e8f6ec;color:#146c2e}
+  .chip.BLOCKED{background:#fdeaea;color:#b3261e}
+  .chip.DECLINED{background:#fef7e0;color:#8a6100}
+  .chip.NONE{background:#f1f3f4;color:#5b6270}
+  .card{border:1px solid #e3e5ea;border-radius:10px;padding:4px 18px 14px;margin:0 0 22px}
+  .derived{margin-top:40px;padding-top:14px;border-top:1px solid #e3e5ea;
+           color:#5b6270;font-size:12.5px}
 """
 
 
-def page(title, body):
+DERIVED_NOTE = "This view is derived entirely from the hash-chained ledger."
+
+
+def nav(active):
+    def link(href, label, key):
+        css = " class=\"on\"" if key == active else ""
+        return f'<a href="{href}"{css}>{label}</a>'
+
+    return (
+        "<nav>"
+        + link("/mandates", "Mandates", "mandates")
+        + link("/", "Ledger chains", "chains")
+        + "</nav>"
+    )
+
+
+def page(title, body, active="chains"):
+    footer = f'<p class="derived" id="derived-footer">{escape(DERIVED_NOTE)}</p>'
     return HTMLResponse(
         f"<!doctype html><html><head><meta charset='utf-8'><title>{escape(title)}</title>"
-        f"<style>{STYLE}</style></head><body>{body}</body></html>"
+        f"<style>{STYLE}</style></head><body>{nav(active)}{body}{footer}</body></html>"
     )
+
+
+def _chip(value):
+    return f'<span class="chip {escape(str(value))}">{escape(str(value))}</span>'
+
+
+def load_all_ledgers():
+    """Every persisted ledger, as (ledger, path) pairs. The dashboard's only input."""
+    pairs = []
+    if not os.path.isdir(LEDGER_DIR):
+        return pairs
+    for name in sorted(os.listdir(LEDGER_DIR)):
+        if not name.endswith(LEDGER_SUFFIX):
+            continue
+        path = os.path.join(LEDGER_DIR, name)
+        try:
+            pairs.append((load_ledger(path), path))
+        except Exception:
+            continue
+    return pairs
 
 
 def ledger_path(ledger_id):
@@ -249,3 +331,169 @@ def export_pdf(ledger_id: str):
     return FileResponse(
         packet["pdf_path"], media_type="application/pdf", filename=f"{ledger_id}.pdf"
     )
+
+
+# --- mandate lifecycle dashboard --------------------------------------------
+#
+# A projection, not a store. Every value below is derived from ledger events by
+# backend/ledger/lifecycle.py on each request.
+
+
+@app.get("/mandates", response_class=HTMLResponse)
+def mandates_index():
+    rows = project_all(load_all_ledgers(), CLOCK())
+    counts = summary_counts(rows)
+
+    if not rows:
+        return page(
+            "Mandates",
+            "<h1>Mandates</h1>"
+            "<div class='empty'>No mandates recorded yet. Generate one:<br><br>"
+            "<code>.venv/bin/python scripts/run_demo.py happy</code><br>"
+            "<code>.venv/bin/python scripts/run_demo.py blocked</code></div>",
+            active="mandates",
+        )
+
+    def tile(key, label):
+        return (
+            f'<div class="tile" data-count="{escape(key)}">'
+            f'<div class="n">{counts.get(key, 0)}</div>'
+            f'<div class="k">{escape(label)}</div></div>'
+        )
+
+    tiles = "".join(
+        [
+            tile("total", "mandates"),
+            tile("ACTIVE", "active"),
+            tile("CONSUMED", "consumed"),
+            tile("EXPIRED", "expired"),
+            tile("blocked_attempts", "blocked"),
+            tile("chain_broken", "chain broken"),
+        ]
+    )
+
+    body_rows = "".join(
+        f"""<tr data-mandate-row data-mandate-hash="{escape(row['mandate_hash'])}">
+              <td class="mono"><a href="/mandates/{escape(row['mandate_hash'])}">
+                {escape(row['hash_prefix'])}…</a></td>
+              <td>{escape((row['merchant'] or {}).get('name') or '—')}</td>
+              <td>{escape(row['items_summary'] or '—')}</td>
+              <td class="mono">{escape(row['price_ceiling_total'] or '—')}
+                {escape(row['currency'] or '')}</td>
+              <td class="mono">{escape((row['expires_at'] or '—')[:19])}</td>
+              <td data-status>{_chip(row['status'])}</td>
+              <td data-last-outcome>{_chip(row['last_outcome'])}</td>
+              <td class="num">{row['attempt_count']}</td>
+            </tr>"""
+        for row in rows
+    )
+
+    return page(
+        "Mandates",
+        "<h1>Mandates</h1>"
+        "<p class='sub'>Lifecycle of every authorization, derived from the ledger.</p>"
+        f'<div class="tiles" id="mandate-summary">{tiles}</div>'
+        "<table id=\"mandate-list\"><tr><th>Mandate</th><th>Merchant</th><th>Items</th>"
+        "<th>Ceiling</th><th>Window ends</th><th>Status</th><th>Last attempt</th>"
+        "<th>Attempts</th></tr>"
+        f"{body_rows}</table>",
+        active="mandates",
+    )
+
+
+@app.get("/mandates/{mandate_hash}", response_class=HTMLResponse)
+def mandate_detail(mandate_hash: str):
+    rows = project_all(load_all_ledgers(), CLOCK())
+    row = next((r for r in rows if r["mandate_hash"] == mandate_hash), None)
+    if row is None:
+        return page("Not found", "<h1>No such mandate</h1><p><a href='/mandates'>Back</a></p>",
+                    active="mandates")
+
+    items = "".join(
+        f"<tr><td class='mono'>{escape(item['product_id'])}</td>"
+        f"<td>{escape(item.get('description') or '')}</td>"
+        f"<td class='mono'>{escape(item['max_unit_price'])}</td>"
+        f"<td class='num'>{item['quantity']}</td></tr>"
+        for item in row["items"]
+    )
+
+    constraints = f"""<div class="card" id="constraints-card">
+      <h2>Authorized scope</h2>
+      <table>{_rows_kv([
+        ("Status", _chip(row['status'])),
+        ("Last attempt", _chip(row['last_outcome'])),
+        ("Request", escape(row['intent_text'] or '')),
+        ("Cardholder", escape((row['user'] or {}).get('user_email') or '')),
+        ("Merchant", escape((row['merchant'] or {}).get('name') or '')
+            + " — <span class='mono'>"
+            + escape((row['merchant'] or {}).get('url') or '') + "</span>"),
+        ("Spend ceiling", escape(f"{row['price_ceiling_total']} {row['currency']}")),
+        ("Window", escape(f"{row['effective_minutes']} minutes from "
+                          f"{(row['created_at'] or '')[:19]}")),
+        ("Window ends", escape((row['expires_at'] or '—')[:19])),
+        ("Mandate hash", f"<span class='mono'>{escape(row['mandate_hash'])}</span>"),
+      ])}</table>
+      <table><tr><th>Product</th><th>Description</th><th>Max unit price</th>
+      <th class="num">Qty</th></tr>{items}</table></div>"""
+
+    if row["attempts"]:
+        attempt_rows = "".join(
+            f"""<tr data-attempt-row data-attempt="{a['attempt']}">
+                  <td class="num">{a['attempt']}</td>
+                  <td class="mono">{escape((a['external_order_ref'] or '')[:12])}…
+                    .{a['attempt']:02d}</td>
+                  <td class="mono">{escape(a['session_id'] or '—')}</td>
+                  <td class="mono">{escape(a['order_number'] or '—')}</td>
+                  <td>{_chip(a['outcome'])}</td>
+                </tr>"""
+            for a in row["attempts"]
+        )
+        attempts = (
+            "<h2>Attempt history</h2>"
+            "<table id=\"attempt-history\"><tr><th class='num'>#</th>"
+            "<th>external_order_ref</th><th>Session</th><th>Order</th><th>Outcome</th></tr>"
+            f"{attempt_rows}</table>"
+        )
+    else:
+        attempts = (
+            "<h2>Attempt history</h2>"
+            "<table id=\"attempt-history\"><tr><th>Attempts</th></tr>"
+            "<tr><td class='missing'>No payment session was ever created for this "
+            "mandate. A gate block is terminal before any Prava call.</td></tr></table>"
+        )
+
+    timeline = "".join(
+        f"""<tr data-timeline-row data-event-type="{escape(event['type'])}">
+              <td class="num">{index}</td>
+              <td><strong>{escape(event['type'])}</strong></td>
+              <td class="mono">{escape(event['ts'][:23])}</td>
+            </tr>"""
+        for index, event in enumerate(row["events"])
+    )
+
+    chains = "".join(
+        f"""<li><a href="/ledger/{escape(l['ledger_id'] or '')}">
+              {escape(l['ledger_id'] or '?')}</a> — {l['event_count']} events,
+              chain {'VALID' if l['chain_valid'] else 'BROKEN'}
+              · <a href="/ledger/{escape(l['ledger_id'] or '')}/export.json">JSON</a>
+              · <a href="/ledger/{escape(l['ledger_id'] or '')}/export.pdf">PDF</a></li>"""
+        for l in row["ledgers"]
+    )
+
+    return page(
+        f"Mandate {row['hash_prefix']}",
+        f"""<h1>Mandate {escape(row['hash_prefix'])}…</h1>
+        <p class="sub"><a href="/mandates">&larr; All mandates</a></p>
+        {constraints}
+        {attempts}
+        <h2>Lifecycle</h2>
+        <table id="lifecycle-timeline"><tr><th class="num">#</th><th>Event</th>
+        <th>Timestamp</th></tr>{timeline}</table>
+        <h2>Evidence</h2>
+        <ul id="mandate-chains">{chains}</ul>""",
+        active="mandates",
+    )
+
+
+def _rows_kv(pairs):
+    return "".join(f"<tr><th>{escape(k)}</th><td>{v}</td></tr>" for k, v in pairs)
