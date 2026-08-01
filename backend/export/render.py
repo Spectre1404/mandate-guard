@@ -191,7 +191,13 @@ def _cover_section(cover, cats):
 def _mandate_section(mandate, cats):
     if not mandate:
         return f"<section><h2>2. Mandate</h2>{_missing('mandate')}</section>"
-    constraints = mandate["constraints"]
+    # A partial mandate must degrade to "not present", never crash: an evidence
+    # tool that 500s on an odd record is useless exactly when it is needed.
+    constraints = mandate.get("constraints")
+    if not constraints:
+        return (
+            f"<section><h2>2. Mandate</h2>{_missing('mandate constraints')}</section>"
+        )
     items = "".join(
         f"<tr><td>{_t(i['product_id'])}</td><td>{_t(i['description'])}</td>"
         f"<td class='num'>{_t(i['max_unit_price'])}</td><td class='num'>{_t(i['quantity'])}</td></tr>"

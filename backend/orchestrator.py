@@ -34,10 +34,15 @@ def _now_iso(dt=None):
 
 
 class GateBlocked(RuntimeError):
-    """The proposal failed verification. Terminal: no session was created."""
+    """The proposal failed verification. Terminal: no session was created.
 
-    def __init__(self, verdict):
+    Carries the ledger, because a blocked purchase is exactly the case someone
+    wants an evidence packet for -- the caller needs the chain, not just the reason.
+    """
+
+    def __init__(self, verdict, ledger=None):
         self.verdict = verdict
+        self.ledger = ledger
         super().__init__(f"gate blocked the proposal: {verdict['failed_rule_ids']}")
 
 
@@ -113,7 +118,7 @@ class Orchestrator:
                     "reason": "no payment session was created",
                 },
             )
-            raise GateBlocked(verdict)
+            raise GateBlocked(verdict, ledger)
         return verdict
 
     def open_session(self, ledger, mandate, proposal, verdict):
