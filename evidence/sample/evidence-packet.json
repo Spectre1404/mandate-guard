@@ -1,0 +1,756 @@
+{
+  "categories": {
+    "chain": "Tamper-evidence for the record above",
+    "checkout": "Proof of completed purchase (mapped to the evidence categories issuers evaluate under frameworks like Visa CE 3.0)",
+    "credentials": "Credential issuance record (masked)",
+    "gate": "Pre-authorization verification result",
+    "mandate": "Cardholder authorization scope (mapped to the evidence categories issuers evaluate under frameworks like Visa CE 3.0)",
+    "precheck": "Point-of-sale re-verification immediately before card entry",
+    "proposal": "Transaction as proposed by the agent",
+    "report": "Outcome reported to the card network",
+    "session": "Payment authorization scope registered with the network"
+  },
+  "chain": {
+    "links": [
+      {
+        "event_id": "fed31c89-97b3-412f-862c-044353280621",
+        "index": 0,
+        "reason": null,
+        "type": "MANDATE_CREATED",
+        "valid": true
+      },
+      {
+        "event_id": "c638e763-6a8b-451b-aacf-d665dd96adfe",
+        "index": 1,
+        "reason": null,
+        "type": "MANDATE_CONFIRMED",
+        "valid": true
+      },
+      {
+        "event_id": "cc29ab47-e93b-4d93-a645-cad45fdaf21f",
+        "index": 2,
+        "reason": null,
+        "type": "AGENT_PROPOSAL",
+        "valid": true
+      },
+      {
+        "event_id": "d446c616-a542-4a4f-8743-8acf6f439e82",
+        "index": 3,
+        "reason": null,
+        "type": "GATE_VERDICT",
+        "valid": true
+      },
+      {
+        "event_id": "2cbffdb0-e3f6-4813-a81b-ead241f9c41d",
+        "index": 4,
+        "reason": null,
+        "type": "SESSION_CREATED",
+        "valid": true
+      },
+      {
+        "event_id": "e7aaf08e-bfb7-4c8d-a30b-98a679ca6a0c",
+        "index": 5,
+        "reason": null,
+        "type": "APPROVAL_OBSERVED",
+        "valid": true
+      },
+      {
+        "event_id": "ff515e40-fc3c-4fc5-bd57-78dce90cad72",
+        "index": 6,
+        "reason": null,
+        "type": "CREDENTIALS_RECEIVED",
+        "valid": true
+      },
+      {
+        "event_id": "c82b2ba5-a348-4dc5-91cd-f4baa2d65476",
+        "index": 7,
+        "reason": null,
+        "type": "EXECUTION_PRECHECK",
+        "valid": true
+      },
+      {
+        "event_id": "f15cce40-c486-428a-a901-c6b7088917d8",
+        "index": 8,
+        "reason": null,
+        "type": "CHECKOUT_EXECUTED",
+        "valid": true
+      },
+      {
+        "event_id": "2606b09d-51fd-48d5-abd1-81f2ecb46045",
+        "index": 9,
+        "reason": null,
+        "type": "STATUS_REPORTED",
+        "valid": true
+      },
+      {
+        "event_id": "650e1a47-bc12-45d0-bfca-3ea455d1116f",
+        "index": 10,
+        "reason": null,
+        "type": "MANDATE_CONSUMED",
+        "valid": true
+      }
+    ],
+    "valid": true
+  },
+  "checkout": {
+    "authorization_code": "BL761512",
+    "confirmation_url": "http://127.0.0.1:64100/order/BL-0D7EE821",
+    "order_number": "BL-0D7EE821",
+    "response_code": "00",
+    "screenshot_path": "/Users/spectre14/mandate-guard/evidence/sample/screenshots/BL-0D7EE821.png",
+    "screenshot_sha256": "c252f1a2fc7be793a9da10c4d523259f68980f03f47a2f6420e2f2128a45247f"
+  },
+  "consumed": {
+    "order_number": "BL-0D7EE821",
+    "session_id": "ses_01KYXVKW860004WR7ZXCEB7KCC"
+  },
+  "cover": {
+    "amount_authorized": "27.00",
+    "chain_valid": true,
+    "currency": "USD",
+    "event_count": 11,
+    "intent_text": "Buy a bag of house blend and two boxes of filters from Beanline, under $30.",
+    "mandate_hash": "057a9bc964d349b8ef1bb25ad6b15f301484188150feb46895ecd6f5e3e831ef",
+    "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+    "merchant": {
+      "country_code_iso2": "US",
+      "name": "Beanline Coffee",
+      "url": "https://beanline.example.com"
+    },
+    "order_number": "BL-0D7EE821",
+    "user": {
+      "user_email": "shivanshamba@mhub.org",
+      "user_id": "user_001"
+    },
+    "visa_confirmation": "SUCCESS"
+  },
+  "credentials": {
+    "expiry_month": "12",
+    "expiry_year": "2027",
+    "token_last4": "7615",
+    "txn_ref_id": "tli_01KYXVKW87000T4HWS1ANKNAX0"
+  },
+  "events": [
+    {
+      "event_hash": "392ca03fc23dce29ac6236ab7c51296d37f9772e88048ee08e3165bbb79ceee1",
+      "event_id": "fed31c89-97b3-412f-862c-044353280621",
+      "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+      "payload": {
+        "mandate": {
+          "confirmed_at": "2026-08-01T05:08:12.173716Z",
+          "constraints": {
+            "currency": "USD",
+            "effective_minutes": 15,
+            "items": [
+              {
+                "description": "Beanline House Blend 12oz",
+                "max_unit_price": "14.00",
+                "product_id": "BL-HOUSE-12",
+                "quantity": 1
+              },
+              {
+                "description": "Paper Filters 100ct",
+                "max_unit_price": "8.00",
+                "product_id": "BL-FILTER-100",
+                "quantity": 2
+              }
+            ],
+            "merchant": {
+              "country_code_iso2": "US",
+              "name": "Beanline Coffee",
+              "url": "https://beanline.example.com"
+            },
+            "price_ceiling_total": "30.00",
+            "substitution_policy": "none"
+          },
+          "created_at": "2026-08-01T05:08:12.173716Z",
+          "intent_text": "Buy a bag of house blend and two boxes of filters from Beanline, under $30.",
+          "mandate_hash": "057a9bc964d349b8ef1bb25ad6b15f301484188150feb46895ecd6f5e3e831ef",
+          "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+          "status": "confirmed",
+          "user": {
+            "user_email": "shivanshamba@mhub.org",
+            "user_id": "user_001"
+          },
+          "version": "1.0"
+        },
+        "mandate_hash": "057a9bc964d349b8ef1bb25ad6b15f301484188150feb46895ecd6f5e3e831ef"
+      },
+      "prev_hash": "057a9bc964d349b8ef1bb25ad6b15f301484188150feb46895ecd6f5e3e831ef",
+      "ts": "2026-08-01T05:09:13.091Z",
+      "type": "MANDATE_CREATED"
+    },
+    {
+      "event_hash": "cc9e6b41e3c8ba8c2526cf8ca7ad795f7014764f4ce3e798b569369bb929a839",
+      "event_id": "c638e763-6a8b-451b-aacf-d665dd96adfe",
+      "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+      "payload": {
+        "confirmed_at": "2026-08-01T05:08:12.173716Z"
+      },
+      "prev_hash": "392ca03fc23dce29ac6236ab7c51296d37f9772e88048ee08e3165bbb79ceee1",
+      "ts": "2026-08-01T05:09:13.091Z",
+      "type": "MANDATE_CONFIRMED"
+    },
+    {
+      "event_hash": "4b74a990b14078c5879f5dfac7b497eb3acba9c0d7f296498f31d16d902190c4",
+      "event_id": "cc29ab47-e93b-4d93-a645-cad45fdaf21f",
+      "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+      "payload": {
+        "proposal": {
+          "agent_meta": {
+            "model": "deterministic",
+            "rationale": "Selected the mandated items at the merchant's listed prices.",
+            "unavailable_product_ids": []
+          },
+          "created_at": "2026-08-01T05:09:12Z",
+          "line_items": [
+            {
+              "description": "Beanline House Blend 12oz",
+              "product_id": "BL-HOUSE-12",
+              "quantity": 1,
+              "unit_price": "12.50"
+            },
+            {
+              "description": "Paper Filters 100ct",
+              "product_id": "BL-FILTER-100",
+              "quantity": 2,
+              "unit_price": "7.25"
+            }
+          ],
+          "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+          "merchant": {
+            "name": "Beanline Coffee",
+            "url": "https://beanline.example.com"
+          },
+          "proposal_id": "6cb4b1b9-16d0-4cc1-9e77-fec6848863ab",
+          "proposed_total": "27.00"
+        }
+      },
+      "prev_hash": "cc9e6b41e3c8ba8c2526cf8ca7ad795f7014764f4ce3e798b569369bb929a839",
+      "ts": "2026-08-01T05:09:13.091Z",
+      "type": "AGENT_PROPOSAL"
+    },
+    {
+      "event_hash": "6cb74743aacfd091228772261cbaf0fe8ecc38dd8e737e899665807dccbff481",
+      "event_id": "d446c616-a542-4a4f-8743-8acf6f439e82",
+      "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+      "payload": {
+        "failed_rule_ids": [],
+        "proposal_id": "6cb4b1b9-16d0-4cc1-9e77-fec6848863ab",
+        "results": [
+          {
+            "actual": "host=beanline.example.com name=BEANLINECOFFEE",
+            "expected": "host=beanline.example.com name=BEANLINECOFFEE",
+            "name": "merchant_match",
+            "pass": true,
+            "rule_id": "R1"
+          },
+          {
+            "actual": [
+              "BL-FILTER-100",
+              "BL-HOUSE-12"
+            ],
+            "expected": [
+              "BL-FILTER-100",
+              "BL-HOUSE-12"
+            ],
+            "name": "item_identity",
+            "pass": true,
+            "rule_id": "R2"
+          },
+          {
+            "actual": [
+              "BL-HOUSE-12=12.50",
+              "BL-FILTER-100=7.25"
+            ],
+            "expected": [
+              "BL-HOUSE-12<=14.00",
+              "BL-FILTER-100<=8.00"
+            ],
+            "name": "unit_price_cap",
+            "pass": true,
+            "rule_id": "R3"
+          },
+          {
+            "actual": {
+              "BL-FILTER-100": 2,
+              "BL-HOUSE-12": 1
+            },
+            "expected": {
+              "BL-FILTER-100": 2,
+              "BL-HOUSE-12": 1
+            },
+            "name": "quantity_exact",
+            "pass": true,
+            "rule_id": "R4"
+          },
+          {
+            "actual": "total=27.00 sum_of_lines=27.00",
+            "expected": "total<=30.00 and total==sum_of_lines(27.00)",
+            "name": "total_ceiling",
+            "pass": true,
+            "rule_id": "R5"
+          },
+          {
+            "actual": "status=confirmed now=2026-08-01T05:09:12.173716+00:00",
+            "expected": "status=confirmed and now<2026-08-01T05:23:12.173716+00:00",
+            "name": "window_valid",
+            "pass": true,
+            "rule_id": "R6"
+          },
+          {
+            "actual": "status=confirmed",
+            "expected": "status not in ['consumed', 'expired', 'revoked']",
+            "name": "single_use",
+            "pass": true,
+            "rule_id": "R7"
+          }
+        ],
+        "verdict": "PASS"
+      },
+      "prev_hash": "4b74a990b14078c5879f5dfac7b497eb3acba9c0d7f296498f31d16d902190c4",
+      "ts": "2026-08-01T05:09:13.091Z",
+      "type": "GATE_VERDICT"
+    },
+    {
+      "event_hash": "1fd2f68d7656d9c5fdb133207ebe3013da3328272cb19a844621b10541ced6e5",
+      "event_id": "2cbffdb0-e3f6-4813-a81b-ead241f9c41d",
+      "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+      "payload": {
+        "attempt": 1,
+        "expires_at": "2026-08-01T05:24:13.094Z",
+        "external_order_ref": "057a9bc964d349b8ef1bb25ad6b15f301484188150feb46895ecd6f5e3e831ef.01",
+        "order_id": "ord_01KYXVKW86000H286PSQWRMTWS",
+        "purchase_context": [
+          {
+            "merchant_details": {
+              "country_code_iso2": "US",
+              "name": "Beanline Coffee",
+              "url": "https://beanline.example.com"
+            },
+            "product_details": [
+              {
+                "description": "Beanline House Blend 12oz",
+                "product_id": "BL-HOUSE-12",
+                "quantity": 1,
+                "unit_price": "12.50"
+              },
+              {
+                "description": "Paper Filters 100ct",
+                "product_id": "BL-FILTER-100",
+                "quantity": 2,
+                "unit_price": "7.25"
+              }
+            ]
+          }
+        ],
+        "session_id": "ses_01KYXVKW860004WR7ZXCEB7KCC"
+      },
+      "prev_hash": "6cb74743aacfd091228772261cbaf0fe8ecc38dd8e737e899665807dccbff481",
+      "ts": "2026-08-01T05:09:13.094Z",
+      "type": "SESSION_CREATED"
+    },
+    {
+      "event_hash": "e7bcdb4722633b509d8a3406f1ef32b33caf4056d5feba4653c935e8acb745ef",
+      "event_id": "e7aaf08e-bfb7-4c8d-a30b-98a679ca6a0c",
+      "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+      "payload": {
+        "session_id": "ses_01KYXVKW860004WR7ZXCEB7KCC",
+        "status": "awaiting_result"
+      },
+      "prev_hash": "1fd2f68d7656d9c5fdb133207ebe3013da3328272cb19a844621b10541ced6e5",
+      "ts": "2026-08-01T05:09:13.096Z",
+      "type": "APPROVAL_OBSERVED"
+    },
+    {
+      "event_hash": "67d93564018d11ba6c5b5210628e867c59432d0d5b56cf2a7fc621385fbe8be4",
+      "event_id": "ff515e40-fc3c-4fc5-bd57-78dce90cad72",
+      "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+      "payload": {
+        "expiry_month": "12",
+        "expiry_year": "2027",
+        "token_last4": "7615",
+        "txn_ref_id": "tli_01KYXVKW87000T4HWS1ANKNAX0"
+      },
+      "prev_hash": "e7bcdb4722633b509d8a3406f1ef32b33caf4056d5feba4653c935e8acb745ef",
+      "ts": "2026-08-01T05:09:13.096Z",
+      "type": "CREDENTIALS_RECEIVED"
+    },
+    {
+      "event_hash": "1773f28e1ca8797dd948683156daf8dfbf5af009c2707d9755005014d2cc73a5",
+      "event_id": "c82b2ba5-a348-4dc5-91cd-f4baa2d65476",
+      "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+      "payload": {
+        "failed_rule_ids": [],
+        "observation": {
+          "line_items": [
+            {
+              "product_id": "BL-FILTER-100",
+              "quantity": 2,
+              "unit_price": "7.25"
+            },
+            {
+              "product_id": "BL-HOUSE-12",
+              "quantity": 1,
+              "unit_price": "12.50"
+            }
+          ],
+          "page_total": "27.00",
+          "url": "http://127.0.0.1:64100/checkout"
+        },
+        "origin_disclosure": {
+          "canonical_merchant_url": "https://beanline.example.com",
+          "declared_origin": "http://127.0.0.1:64100",
+          "observed_host": "127.0.0.1"
+        },
+        "results": [
+          {
+            "actual": "27.00",
+            "expected": "27.00",
+            "name": "page_total_matches_session",
+            "pass": true,
+            "rule_id": "E1"
+          },
+          {
+            "actual": "127.0.0.1",
+            "expected": "127.0.0.1",
+            "name": "storefront_host_matches_declared_origin",
+            "pass": true,
+            "rule_id": "E2"
+          },
+          {
+            "actual": [
+              [
+                "BL-FILTER-100",
+                "7.25",
+                2
+              ],
+              [
+                "BL-HOUSE-12",
+                "12.50",
+                1
+              ]
+            ],
+            "expected": [
+              [
+                "BL-FILTER-100",
+                "7.25",
+                2
+              ],
+              [
+                "BL-HOUSE-12",
+                "12.50",
+                1
+              ]
+            ],
+            "name": "page_items_match_proposal",
+            "pass": true,
+            "rule_id": "E3"
+          }
+        ],
+        "session_total": "27.00",
+        "verdict": "PASS"
+      },
+      "prev_hash": "67d93564018d11ba6c5b5210628e867c59432d0d5b56cf2a7fc621385fbe8be4",
+      "ts": "2026-08-01T05:09:13.424Z",
+      "type": "EXECUTION_PRECHECK"
+    },
+    {
+      "event_hash": "a1623d0fc7cc4db44bf4c1d275f9980fd7a8b33afffc3303ffbed8504cd1b5e8",
+      "event_id": "f15cce40-c486-428a-a901-c6b7088917d8",
+      "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+      "payload": {
+        "authorization_code": "BL761512",
+        "confirmation_url": "http://127.0.0.1:64100/order/BL-0D7EE821",
+        "order_number": "BL-0D7EE821",
+        "response_code": "00",
+        "screenshot_path": "/Users/spectre14/mandate-guard/evidence/sample/screenshots/BL-0D7EE821.png",
+        "screenshot_sha256": "c252f1a2fc7be793a9da10c4d523259f68980f03f47a2f6420e2f2128a45247f"
+      },
+      "prev_hash": "1773f28e1ca8797dd948683156daf8dfbf5af009c2707d9755005014d2cc73a5",
+      "ts": "2026-08-01T05:09:13.533Z",
+      "type": "CHECKOUT_EXECUTED"
+    },
+    {
+      "event_hash": "f8f91ddcb6c7854f49ece6ac34e21f091777c4db7cad120a5b5220faf9e15ac9",
+      "event_id": "2606b09d-51fd-48d5-abd1-81f2ecb46045",
+      "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+      "payload": {
+        "authorization_code": "BL761512",
+        "response_code": "00",
+        "txn_ref_id": "tli_01KYXVKW87000T4HWS1ANKNAX0",
+        "txn_status": "APPROVED",
+        "visa_confirmation": "SUCCESS"
+      },
+      "prev_hash": "a1623d0fc7cc4db44bf4c1d275f9980fd7a8b33afffc3303ffbed8504cd1b5e8",
+      "ts": "2026-08-01T05:09:13.534Z",
+      "type": "STATUS_REPORTED"
+    },
+    {
+      "event_hash": "39526b4cd51395ac6f83eee15d1f85c4900019ae1892ab4382ff5e55c9a684d5",
+      "event_id": "650e1a47-bc12-45d0-bfca-3ea455d1116f",
+      "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+      "payload": {
+        "order_number": "BL-0D7EE821",
+        "session_id": "ses_01KYXVKW860004WR7ZXCEB7KCC"
+      },
+      "prev_hash": "f8f91ddcb6c7854f49ece6ac34e21f091777c4db7cad120a5b5220faf9e15ac9",
+      "ts": "2026-08-01T05:09:13.534Z",
+      "type": "MANDATE_CONSUMED"
+    }
+  ],
+  "gate": {
+    "failed_rule_ids": [],
+    "proposal_id": "6cb4b1b9-16d0-4cc1-9e77-fec6848863ab",
+    "results": [
+      {
+        "actual": "host=beanline.example.com name=BEANLINECOFFEE",
+        "expected": "host=beanline.example.com name=BEANLINECOFFEE",
+        "name": "merchant_match",
+        "pass": true,
+        "rule_id": "R1"
+      },
+      {
+        "actual": [
+          "BL-FILTER-100",
+          "BL-HOUSE-12"
+        ],
+        "expected": [
+          "BL-FILTER-100",
+          "BL-HOUSE-12"
+        ],
+        "name": "item_identity",
+        "pass": true,
+        "rule_id": "R2"
+      },
+      {
+        "actual": [
+          "BL-HOUSE-12=12.50",
+          "BL-FILTER-100=7.25"
+        ],
+        "expected": [
+          "BL-HOUSE-12<=14.00",
+          "BL-FILTER-100<=8.00"
+        ],
+        "name": "unit_price_cap",
+        "pass": true,
+        "rule_id": "R3"
+      },
+      {
+        "actual": {
+          "BL-FILTER-100": 2,
+          "BL-HOUSE-12": 1
+        },
+        "expected": {
+          "BL-FILTER-100": 2,
+          "BL-HOUSE-12": 1
+        },
+        "name": "quantity_exact",
+        "pass": true,
+        "rule_id": "R4"
+      },
+      {
+        "actual": "total=27.00 sum_of_lines=27.00",
+        "expected": "total<=30.00 and total==sum_of_lines(27.00)",
+        "name": "total_ceiling",
+        "pass": true,
+        "rule_id": "R5"
+      },
+      {
+        "actual": "status=confirmed now=2026-08-01T05:09:12.173716+00:00",
+        "expected": "status=confirmed and now<2026-08-01T05:23:12.173716+00:00",
+        "name": "window_valid",
+        "pass": true,
+        "rule_id": "R6"
+      },
+      {
+        "actual": "status=confirmed",
+        "expected": "status not in ['consumed', 'expired', 'revoked']",
+        "name": "single_use",
+        "pass": true,
+        "rule_id": "R7"
+      }
+    ],
+    "verdict": "PASS"
+  },
+  "gate_blocked": null,
+  "mandate": {
+    "confirmed_at": "2026-08-01T05:08:12.173716Z",
+    "constraints": {
+      "currency": "USD",
+      "effective_minutes": 15,
+      "items": [
+        {
+          "description": "Beanline House Blend 12oz",
+          "max_unit_price": "14.00",
+          "product_id": "BL-HOUSE-12",
+          "quantity": 1
+        },
+        {
+          "description": "Paper Filters 100ct",
+          "max_unit_price": "8.00",
+          "product_id": "BL-FILTER-100",
+          "quantity": 2
+        }
+      ],
+      "merchant": {
+        "country_code_iso2": "US",
+        "name": "Beanline Coffee",
+        "url": "https://beanline.example.com"
+      },
+      "price_ceiling_total": "30.00",
+      "substitution_policy": "none"
+    },
+    "created_at": "2026-08-01T05:08:12.173716Z",
+    "intent_text": "Buy a bag of house blend and two boxes of filters from Beanline, under $30.",
+    "mandate_hash": "057a9bc964d349b8ef1bb25ad6b15f301484188150feb46895ecd6f5e3e831ef",
+    "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+    "status": "confirmed",
+    "user": {
+      "user_email": "shivanshamba@mhub.org",
+      "user_id": "user_001"
+    },
+    "version": "1.0"
+  },
+  "narrative": "Outcome: COMPLETED. Merchant: Beanline Coffee. Order number: BL-0D7EE821.\n\nRequested purchase: one bag of house blend and two boxes of filters, described as under $30, currency USD.\n\nAuthorization metadata: gate_verdict = PASS; visa_confirmation = SUCCESS; chain_valid = true; failed_rules = [] (none); event_count = 11.",
+  "narrative_label": "Narrative (AI-generated summary of the deterministic record below)",
+  "outcome": "COMPLETED",
+  "packet_version": "1.0",
+  "precheck": {
+    "failed_rule_ids": [],
+    "observation": {
+      "line_items": [
+        {
+          "product_id": "BL-FILTER-100",
+          "quantity": 2,
+          "unit_price": "7.25"
+        },
+        {
+          "product_id": "BL-HOUSE-12",
+          "quantity": 1,
+          "unit_price": "12.50"
+        }
+      ],
+      "page_total": "27.00",
+      "url": "http://127.0.0.1:64100/checkout"
+    },
+    "origin_disclosure": {
+      "canonical_merchant_url": "https://beanline.example.com",
+      "declared_origin": "http://127.0.0.1:64100",
+      "observed_host": "127.0.0.1"
+    },
+    "results": [
+      {
+        "actual": "27.00",
+        "expected": "27.00",
+        "name": "page_total_matches_session",
+        "pass": true,
+        "rule_id": "E1"
+      },
+      {
+        "actual": "127.0.0.1",
+        "expected": "127.0.0.1",
+        "name": "storefront_host_matches_declared_origin",
+        "pass": true,
+        "rule_id": "E2"
+      },
+      {
+        "actual": [
+          [
+            "BL-FILTER-100",
+            "7.25",
+            2
+          ],
+          [
+            "BL-HOUSE-12",
+            "12.50",
+            1
+          ]
+        ],
+        "expected": [
+          [
+            "BL-FILTER-100",
+            "7.25",
+            2
+          ],
+          [
+            "BL-HOUSE-12",
+            "12.50",
+            1
+          ]
+        ],
+        "name": "page_items_match_proposal",
+        "pass": true,
+        "rule_id": "E3"
+      }
+    ],
+    "session_total": "27.00",
+    "verdict": "PASS"
+  },
+  "proposal": {
+    "agent_meta": {
+      "model": "deterministic",
+      "rationale": "Selected the mandated items at the merchant's listed prices.",
+      "unavailable_product_ids": []
+    },
+    "created_at": "2026-08-01T05:09:12Z",
+    "line_items": [
+      {
+        "description": "Beanline House Blend 12oz",
+        "product_id": "BL-HOUSE-12",
+        "quantity": 1,
+        "unit_price": "12.50"
+      },
+      {
+        "description": "Paper Filters 100ct",
+        "product_id": "BL-FILTER-100",
+        "quantity": 2,
+        "unit_price": "7.25"
+      }
+    ],
+    "mandate_id": "d9e5ba21-c5e6-46d9-9312-f3401e8a452b",
+    "merchant": {
+      "name": "Beanline Coffee",
+      "url": "https://beanline.example.com"
+    },
+    "proposal_id": "6cb4b1b9-16d0-4cc1-9e77-fec6848863ab",
+    "proposed_total": "27.00"
+  },
+  "report": {
+    "authorization_code": "BL761512",
+    "response_code": "00",
+    "txn_ref_id": "tli_01KYXVKW87000T4HWS1ANKNAX0",
+    "txn_status": "APPROVED",
+    "visa_confirmation": "SUCCESS"
+  },
+  "session": {
+    "attempt": 1,
+    "expires_at": "2026-08-01T05:24:13.094Z",
+    "external_order_ref": "057a9bc964d349b8ef1bb25ad6b15f301484188150feb46895ecd6f5e3e831ef.01",
+    "order_id": "ord_01KYXVKW86000H286PSQWRMTWS",
+    "purchase_context": [
+      {
+        "merchant_details": {
+          "country_code_iso2": "US",
+          "name": "Beanline Coffee",
+          "url": "https://beanline.example.com"
+        },
+        "product_details": [
+          {
+            "description": "Beanline House Blend 12oz",
+            "product_id": "BL-HOUSE-12",
+            "quantity": 1,
+            "unit_price": "12.50"
+          },
+          {
+            "description": "Paper Filters 100ct",
+            "product_id": "BL-FILTER-100",
+            "quantity": 2,
+            "unit_price": "7.25"
+          }
+        ]
+      }
+    ],
+    "session_id": "ses_01KYXVKW860004WR7ZXCEB7KCC"
+  }
+}
