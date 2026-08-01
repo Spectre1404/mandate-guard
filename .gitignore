@@ -4,3 +4,4 @@ CLAUDE.md
 __pycache__/
 .venv/
 node_modules/
+evidence/screenshots/

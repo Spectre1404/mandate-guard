@@ -13,6 +13,8 @@ below are part of the contract with the executor:
     [data-line-item]             one per cart line, with data-product-id/-unit-price/-quantity
     #card-number #expiry #cvv #cardholder-name #submit-payment
     #order-number                on the confirmation page
+    #authorization-code          processor auth code, forwarded to report-status
+    #response-code               processor response code ("00" / "05")
 
 Run:  .venv/bin/uvicorn storefront.app:app --port 8200
 """
@@ -274,9 +276,11 @@ def order_confirmation(order_number: str):
         f"""<div class="ok">
               <h1>Order confirmed</h1>
               <p>Order number: <strong id="order-number">{escape(order_number)}</strong></p>
-              <p class="blurb">Authorization {escape(order['authorization_code'])} &middot;
-                 response {escape(order['response_code'])} &middot;
-                 card ending {escape(order['card_last4'])}</p>
+              <p class="blurb">Authorization
+                 <span id="authorization-code">{escape(order['authorization_code'])}</span>
+                 &middot; response
+                 <span id="response-code">{escape(order['response_code'])}</span>
+                 &middot; card ending {escape(order['card_last4'])}</p>
             </div>
             <div style="margin-top:20px">{rows}</div>
             <div class="row" style="margin-top:16px"><span>Total paid</span>
