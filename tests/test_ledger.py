@@ -207,7 +207,9 @@ def test_credential_events_must_not_carry_a_full_token(ledger):
         append_event(
             ledger,
             "CREDENTIALS_RECEIVED",
-            {"token": "4111111111111111", "txn_ref_id": "tli_1"},
+            # Value is irrelevant -- rejection keys off the field name, so no
+            # card-shaped literal needs to exist in this repository at all.
+            {"token": "<a-token-would-go-here>", "txn_ref_id": "tli_1"},
             ts="2026-08-01T12:00:00Z",
         )
 
