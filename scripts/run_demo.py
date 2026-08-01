@@ -31,6 +31,18 @@ def main():
     parser.add_argument(
         "--no-llm", action="store_true", help="skip live gpt-5-mini calls"
     )
+    parser.add_argument(
+        "--prava",
+        choices=["fake", "real"],
+        default="fake",
+        help=(
+            "payment backend for THIS invocation only. 'fake' (default) is the local "
+            "fake_prava and costs no quota. 'real' talks to the Prava sandbox using "
+            "PRAVA_BASE_URL/PRAVA_SECRET_KEY and spends one session; it requires a "
+            "human to complete card entry, OTP and passkey at the printed iframe_url."
+        ),
+    )
+    parser.add_argument("--storefront-port", type=int, default=None)
     args = parser.parse_args()
 
     print("=" * 72)
@@ -39,6 +51,8 @@ def main():
         out_dir=args.out,
         live_llm=not args.no_llm,
         ledger_dir=args.ledgers,
+        prava=args.prava,
+        storefront_port=args.storefront_port,
     )
     print("=" * 72)
 

@@ -204,8 +204,13 @@ class Orchestrator:
 
     # --- the whole thing ----------------------------------------------------
 
-    def run(self, mandate, proposal, now, cardholder_name):
-        """Happy path end to end. Raises GateBlocked before any session exists."""
+    def run(self, mandate, proposal, now, cardholder_name, on_session=None):
+        """Happy path end to end. Raises GateBlocked before any session exists.
+
+        `on_session(session)` fires immediately after the session is created and
+        before polling begins -- the hook a real run needs in order to hand the
+        cardholder the `iframe_url` for passkey approval.
+        """
         if mandate.get("mandate_hash") != compute_mandate_hash(mandate):
             raise ValueError("mandate hash does not match its contents")
 
@@ -213,6 +218,8 @@ class Orchestrator:
         verdict = self.verify(ledger, mandate, proposal, now)
 
         session = self.open_session(ledger, mandate, proposal, verdict)
+        if on_session:
+            on_session(session)
         credentials, transitions = self.await_credentials(ledger, mandate, session)
 
         executor = self.executor_factory(ledger, mandate["mandate_id"])

@@ -13,77 +13,77 @@
   "chain": {
     "links": [
       {
-        "event_id": "65c29ec2-2a33-4c08-ad47-0adab1475654",
+        "event_id": "6fdb3872-d3ca-467b-b618-424717bacb2c",
         "index": 0,
         "reason": null,
         "type": "MANDATE_CREATED",
         "valid": true
       },
       {
-        "event_id": "6ffc2dda-fa20-46c9-84f5-3a8dd0e87291",
+        "event_id": "a65c327a-eef6-48d7-a0c9-5a060ce3e4de",
         "index": 1,
         "reason": null,
         "type": "MANDATE_CONFIRMED",
         "valid": true
       },
       {
-        "event_id": "08c3414f-f047-4879-a413-ab8635eb164d",
+        "event_id": "6a6b7cf5-6180-4f32-8d38-1dec21d73ce4",
         "index": 2,
         "reason": null,
         "type": "AGENT_PROPOSAL",
         "valid": true
       },
       {
-        "event_id": "4ee39aaa-fe17-4ac2-a9f2-e5c3ff468b4d",
+        "event_id": "76294970-def7-490c-879a-c898c3b82e15",
         "index": 3,
         "reason": null,
         "type": "GATE_VERDICT",
         "valid": true
       },
       {
-        "event_id": "c07a3454-d303-4b63-8b4c-146c35c7f164",
+        "event_id": "e7789d69-659b-4df7-acab-0a99b40df427",
         "index": 4,
         "reason": null,
         "type": "SESSION_CREATED",
         "valid": true
       },
       {
-        "event_id": "18ae1ea2-9a1e-4253-8f9d-490b96bb4848",
+        "event_id": "c62f80b9-9bcf-4b70-9119-7b1c4245bf18",
         "index": 5,
         "reason": null,
         "type": "APPROVAL_OBSERVED",
         "valid": true
       },
       {
-        "event_id": "69d58125-3b5c-4a28-93d3-6ff7c0b671aa",
+        "event_id": "c5334751-236f-4092-914f-74a68d0e0f11",
         "index": 6,
         "reason": null,
         "type": "CREDENTIALS_RECEIVED",
         "valid": true
       },
       {
-        "event_id": "4e739dde-a6a4-4ca3-bcef-774dd5febd1e",
+        "event_id": "091a38a1-1396-4d35-8acb-5f820e86cae6",
         "index": 7,
         "reason": null,
         "type": "EXECUTION_PRECHECK",
         "valid": true
       },
       {
-        "event_id": "6a7bc739-6483-4b99-b6f5-ba0a68e5f135",
+        "event_id": "34f8d56b-9abd-420a-8ee7-d7cac287f574",
         "index": 8,
         "reason": null,
         "type": "CHECKOUT_EXECUTED",
         "valid": true
       },
       {
-        "event_id": "de32b065-5fce-4e76-afbb-cfb4e53bc091",
+        "event_id": "53c59786-84c4-49f3-8e33-f5a582115d5b",
         "index": 9,
         "reason": null,
         "type": "STATUS_REPORTED",
         "valid": true
       },
       {
-        "event_id": "85dbb02c-e77d-4fd6-b935-455f3bbf55fb",
+        "event_id": "219bdcbf-1565-4810-9c0e-534a55a584d8",
         "index": 10,
         "reason": null,
         "type": "MANDATE_CONSUMED",
@@ -93,16 +93,16 @@
     "valid": true
   },
   "checkout": {
-    "authorization_code": "BL629512",
-    "confirmation_url": "http://127.0.0.1:64427/order/BL-02F26A17",
-    "order_number": "BL-02F26A17",
+    "authorization_code": "BL598112",
+    "confirmation_url": "http://127.0.0.1:8200/order/BL-DFBD782B",
+    "order_number": "BL-DFBD782B",
     "response_code": "00",
-    "screenshot_path": "/Users/spectre14/mandate-guard/evidence/sample/screenshots/BL-02F26A17.png",
-    "screenshot_sha256": "8784aa40dccba0d84d997d97ac930fc940f0ddfa6e8ddf6bc60da8910140900a"
+    "screenshot_path": "/Users/spectre14/mandate-guard/evidence/demo/screenshots/BL-DFBD782B.png",
+    "screenshot_sha256": "e5b688d21bf538d0fea8579a611cdb8340d9ac8f151f4fe03e8a5625450bb566"
   },
   "consumed": {
-    "order_number": "BL-02F26A17",
-    "session_id": "ses_01KYZ7AFQP000FHYZB7EXND8Q6"
+    "order_number": "BL-DFBD782B",
+    "session_id": "ses_01KYZBDEGN8P1HWEWC2X585Z0T"
   },
   "cover": {
     "amount_authorized": "27.00",
@@ -110,14 +110,14 @@
     "currency": "USD",
     "event_count": 11,
     "intent_text": "Buy a bag of house blend and two boxes of filters from Beanline, under $30.",
-    "mandate_hash": "97e59cc99b6eef82f8e20da257c2afe56423b8461be4cba66d59cca0d6297de8",
-    "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+    "mandate_hash": "8d1d37bce372d8f7ae74d7436ee5e46e310fb4d1db61bba3f69243afdb7193b7",
+    "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
     "merchant": {
       "country_code_iso2": "US",
       "name": "Beanline Coffee",
       "url": "https://beanline.example.com"
     },
-    "order_number": "BL-02F26A17",
+    "order_number": "BL-DFBD782B",
     "user": {
       "user_email": "shivanshamba@mhub.org",
       "user_id": "user_001"
@@ -126,18 +126,18 @@
   },
   "credentials": {
     "expiry_month": "12",
-    "expiry_year": "2027",
-    "token_last4": "6295",
-    "txn_ref_id": "tli_01KYZ7AFQR0003D9W6DFZKZ3Y6"
+    "expiry_year": "2030",
+    "token_last4": "5981",
+    "txn_ref_id": "tli_01KYZBPV3NNB3ECP34HDDQ5VS8"
   },
   "events": [
     {
-      "event_hash": "3de20470429236a553b988b50a240c1c8a6cc48508a72956687bb801aade6c58",
-      "event_id": "65c29ec2-2a33-4c08-ad47-0adab1475654",
-      "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+      "event_hash": "fbe21f17e9486505a6a40ce98191430f984ca77b2746a9e20b0135584d35aca5",
+      "event_id": "6fdb3872-d3ca-467b-b618-424717bacb2c",
+      "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
       "payload": {
         "mandate": {
-          "confirmed_at": "2026-08-01T17:51:53.384033Z",
+          "confirmed_at": "2026-08-01T19:03:16.762090Z",
           "constraints": {
             "currency": "USD",
             "effective_minutes": 15,
@@ -163,10 +163,10 @@
             "price_ceiling_total": "30.00",
             "substitution_policy": "none"
           },
-          "created_at": "2026-08-01T17:51:53.384033Z",
+          "created_at": "2026-08-01T19:03:16.762090Z",
           "intent_text": "Buy a bag of house blend and two boxes of filters from Beanline, under $30.",
-          "mandate_hash": "97e59cc99b6eef82f8e20da257c2afe56423b8461be4cba66d59cca0d6297de8",
-          "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+          "mandate_hash": "8d1d37bce372d8f7ae74d7436ee5e46e310fb4d1db61bba3f69243afdb7193b7",
+          "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
           "status": "confirmed",
           "user": {
             "user_email": "shivanshamba@mhub.org",
@@ -174,35 +174,35 @@
           },
           "version": "1.0"
         },
-        "mandate_hash": "97e59cc99b6eef82f8e20da257c2afe56423b8461be4cba66d59cca0d6297de8"
+        "mandate_hash": "8d1d37bce372d8f7ae74d7436ee5e46e310fb4d1db61bba3f69243afdb7193b7"
       },
-      "prev_hash": "97e59cc99b6eef82f8e20da257c2afe56423b8461be4cba66d59cca0d6297de8",
-      "ts": "2026-08-01T17:53:02.709Z",
+      "prev_hash": "8d1d37bce372d8f7ae74d7436ee5e46e310fb4d1db61bba3f69243afdb7193b7",
+      "ts": "2026-08-01T19:04:33.868Z",
       "type": "MANDATE_CREATED"
     },
     {
-      "event_hash": "83a4f08aa0ba4a61d7f16ff4f9741d37463346dfa20e5413b4cfd97fc0c860f7",
-      "event_id": "6ffc2dda-fa20-46c9-84f5-3a8dd0e87291",
-      "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+      "event_hash": "9dba756bf49f8ca8994ac49f3b13706d93e946d05100d9034d187fbbcd4f6f4a",
+      "event_id": "a65c327a-eef6-48d7-a0c9-5a060ce3e4de",
+      "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
       "payload": {
-        "confirmed_at": "2026-08-01T17:51:53.384033Z"
+        "confirmed_at": "2026-08-01T19:03:16.762090Z"
       },
-      "prev_hash": "3de20470429236a553b988b50a240c1c8a6cc48508a72956687bb801aade6c58",
-      "ts": "2026-08-01T17:53:02.709Z",
+      "prev_hash": "fbe21f17e9486505a6a40ce98191430f984ca77b2746a9e20b0135584d35aca5",
+      "ts": "2026-08-01T19:04:33.868Z",
       "type": "MANDATE_CONFIRMED"
     },
     {
-      "event_hash": "b49ec95bc30b6fd687acdab5caa166a26066da2690dcc59fc94eab74ab5a5071",
-      "event_id": "08c3414f-f047-4879-a413-ab8635eb164d",
-      "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+      "event_hash": "8a1d19a1804762d4e9fdfd4c2aca5f90d78990988b122b7b7ca5d51f0d40b9a5",
+      "event_id": "6a6b7cf5-6180-4f32-8d38-1dec21d73ce4",
+      "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
       "payload": {
         "proposal": {
           "agent_meta": {
             "model": "gpt-5-mini",
-            "rationale": "The agent selected one Beanline House Blend 12oz priced at 12.50 and two Paper Filters 100ct priced at 7.25 each, corresponding to the requested bag of house blend and two boxes of filters. The item prices sum to a total of 27.00 USD and no items are marked unavailable.",
+            "rationale": "The agent selected Beanline House Blend 12oz (x1) and Paper Filters 100ct (x2) because the user requested one bag of house blend and two boxes of filters from Beanline. The data shows prices of $12.50 for the coffee and $7.25 per filter box, totaling $27.00, with no items marked unavailable.",
             "unavailable_product_ids": []
           },
-          "created_at": "2026-08-01T17:52:53Z",
+          "created_at": "2026-08-01T19:04:16Z",
           "line_items": [
             {
               "description": "Beanline House Blend 12oz",
@@ -217,26 +217,26 @@
               "unit_price": "7.25"
             }
           ],
-          "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+          "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
           "merchant": {
             "name": "Beanline Coffee",
             "url": "https://beanline.example.com"
           },
-          "proposal_id": "7b02a1f2-a4a5-40b4-b01a-b6f035eef3b6",
+          "proposal_id": "c30a20dc-845f-4cd7-8b03-6e380dad5a8b",
           "proposed_total": "27.00"
         }
       },
-      "prev_hash": "83a4f08aa0ba4a61d7f16ff4f9741d37463346dfa20e5413b4cfd97fc0c860f7",
-      "ts": "2026-08-01T17:53:02.709Z",
+      "prev_hash": "9dba756bf49f8ca8994ac49f3b13706d93e946d05100d9034d187fbbcd4f6f4a",
+      "ts": "2026-08-01T19:04:33.868Z",
       "type": "AGENT_PROPOSAL"
     },
     {
-      "event_hash": "c0401f0ad08510818d91dd3928b3886f330d54802aeda769709c388b5c39da3b",
-      "event_id": "4ee39aaa-fe17-4ac2-a9f2-e5c3ff468b4d",
-      "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+      "event_hash": "a1cef2d07e92feda6bf5db3f22055e6dd0d3a9125da39069b08962960264f95a",
+      "event_id": "76294970-def7-490c-879a-c898c3b82e15",
+      "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
       "payload": {
         "failed_rule_ids": [],
-        "proposal_id": "7b02a1f2-a4a5-40b4-b01a-b6f035eef3b6",
+        "proposal_id": "c30a20dc-845f-4cd7-8b03-6e380dad5a8b",
         "results": [
           {
             "actual": "host=beanline.example.com name=BEANLINECOFFEE",
@@ -292,8 +292,8 @@
             "rule_id": "R5"
           },
           {
-            "actual": "status=confirmed now=2026-08-01T17:52:53.384033+00:00",
-            "expected": "status=confirmed and now<2026-08-01T18:06:53.384033+00:00",
+            "actual": "status=confirmed now=2026-08-01T19:04:16.762090+00:00",
+            "expected": "status=confirmed and now<2026-08-01T19:18:16.762090+00:00",
             "name": "window_valid",
             "pass": true,
             "rule_id": "R6"
@@ -308,19 +308,19 @@
         ],
         "verdict": "PASS"
       },
-      "prev_hash": "b49ec95bc30b6fd687acdab5caa166a26066da2690dcc59fc94eab74ab5a5071",
-      "ts": "2026-08-01T17:53:02.709Z",
+      "prev_hash": "8a1d19a1804762d4e9fdfd4c2aca5f90d78990988b122b7b7ca5d51f0d40b9a5",
+      "ts": "2026-08-01T19:04:33.868Z",
       "type": "GATE_VERDICT"
     },
     {
-      "event_hash": "c0fb32bd7f281e7790459cedbf246140763e091c84bf37169553ccdec6e06252",
-      "event_id": "c07a3454-d303-4b63-8b4c-146c35c7f164",
-      "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+      "event_hash": "f8cda90bbb6b5252e38e003f24b07f6c40915658459e3ac81b2179d6deda48cc",
+      "event_id": "e7789d69-659b-4df7-acab-0a99b40df427",
+      "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
       "payload": {
         "attempt": 1,
-        "expires_at": "2026-08-01T18:08:02.710Z",
-        "external_order_ref": "97e59cc99b6eef82f8e20da257c2afe56423b8461be4cba66d59cca0d6297de8.01",
-        "order_id": "ord_01KYZ7AFQP000MTDYB21KS05CX",
+        "expires_at": "2026-08-01T19:19:34.070Z",
+        "external_order_ref": "8d1d37bce372d8f7ae74d7436ee5e46e310fb4d1db61bba3f69243afdb7193b7.01",
+        "order_id": "ord_01KYZBDEGPZX4SWMA6KG29ER7F",
         "purchase_context": [
           {
             "merchant_details": {
@@ -344,42 +344,42 @@
             ]
           }
         ],
-        "session_id": "ses_01KYZ7AFQP000FHYZB7EXND8Q6"
+        "session_id": "ses_01KYZBDEGN8P1HWEWC2X585Z0T"
       },
-      "prev_hash": "c0401f0ad08510818d91dd3928b3886f330d54802aeda769709c388b5c39da3b",
-      "ts": "2026-08-01T17:53:02.711Z",
+      "prev_hash": "a1cef2d07e92feda6bf5db3f22055e6dd0d3a9125da39069b08962960264f95a",
+      "ts": "2026-08-01T19:04:34.017Z",
       "type": "SESSION_CREATED"
     },
     {
-      "event_hash": "a79616e86729913a4c028f23295e51eb104655d7bab018b75fb4799755d2f956",
-      "event_id": "18ae1ea2-9a1e-4253-8f9d-490b96bb4848",
-      "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+      "event_hash": "3cb7987cb092ce2d15d1a988e860d3240c39f252d80a483d58708a8fa65323a7",
+      "event_id": "c62f80b9-9bcf-4b70-9119-7b1c4245bf18",
+      "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
       "payload": {
-        "session_id": "ses_01KYZ7AFQP000FHYZB7EXND8Q6",
+        "session_id": "ses_01KYZBDEGN8P1HWEWC2X585Z0T",
         "status": "awaiting_result"
       },
-      "prev_hash": "c0fb32bd7f281e7790459cedbf246140763e091c84bf37169553ccdec6e06252",
-      "ts": "2026-08-01T17:53:02.713Z",
+      "prev_hash": "f8cda90bbb6b5252e38e003f24b07f6c40915658459e3ac81b2179d6deda48cc",
+      "ts": "2026-08-01T19:10:09.670Z",
       "type": "APPROVAL_OBSERVED"
     },
     {
-      "event_hash": "d34ad8526f53483a3709d31c52119131dcdb3923e67acf1e04639ce99872bd0e",
-      "event_id": "69d58125-3b5c-4a28-93d3-6ff7c0b671aa",
-      "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+      "event_hash": "cc02fec216857fac13fa2541e5a977d4f6600a452f1f1728cfb2b0ebb41ea6cd",
+      "event_id": "c5334751-236f-4092-914f-74a68d0e0f11",
+      "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
       "payload": {
         "expiry_month": "12",
-        "expiry_year": "2027",
-        "token_last4": "6295",
-        "txn_ref_id": "tli_01KYZ7AFQR0003D9W6DFZKZ3Y6"
+        "expiry_year": "2030",
+        "token_last4": "5981",
+        "txn_ref_id": "tli_01KYZBPV3NNB3ECP34HDDQ5VS8"
       },
-      "prev_hash": "a79616e86729913a4c028f23295e51eb104655d7bab018b75fb4799755d2f956",
-      "ts": "2026-08-01T17:53:02.713Z",
+      "prev_hash": "3cb7987cb092ce2d15d1a988e860d3240c39f252d80a483d58708a8fa65323a7",
+      "ts": "2026-08-01T19:10:09.694Z",
       "type": "CREDENTIALS_RECEIVED"
     },
     {
-      "event_hash": "6f0cd04ceaa49b3a19c99e30ec4adf940f0036a5a6040500e51cde0369d80d75",
-      "event_id": "4e739dde-a6a4-4ca3-bcef-774dd5febd1e",
-      "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+      "event_hash": "e6e4951dcdc1fb9d6820fadb68e9c52a1b346e2f5357cfbee3a304367dda9d68",
+      "event_id": "091a38a1-1396-4d35-8acb-5f820e86cae6",
+      "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
       "payload": {
         "failed_rule_ids": [],
         "observation": {
@@ -396,11 +396,11 @@
             }
           ],
           "page_total": "27.00",
-          "url": "http://127.0.0.1:64427/checkout"
+          "url": "http://127.0.0.1:8200/checkout"
         },
         "origin_disclosure": {
           "canonical_merchant_url": "https://beanline.example.com",
-          "declared_origin": "http://127.0.0.1:64427",
+          "declared_origin": "http://127.0.0.1:8200",
           "observed_host": "127.0.0.1"
         },
         "results": [
@@ -451,57 +451,57 @@
         "session_total": "27.00",
         "verdict": "PASS"
       },
-      "prev_hash": "d34ad8526f53483a3709d31c52119131dcdb3923e67acf1e04639ce99872bd0e",
-      "ts": "2026-08-01T17:53:03.048Z",
+      "prev_hash": "cc02fec216857fac13fa2541e5a977d4f6600a452f1f1728cfb2b0ebb41ea6cd",
+      "ts": "2026-08-01T19:10:10.542Z",
       "type": "EXECUTION_PRECHECK"
     },
     {
-      "event_hash": "c06df971a106ac35d64ae9db02ecc42045ec6b285f9244595522edb43f03f3ee",
-      "event_id": "6a7bc739-6483-4b99-b6f5-ba0a68e5f135",
-      "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+      "event_hash": "0298edd07f8ae7e15cb72c40aaee4c5a32fcb6dc07f5e8aa432e1a8cb23150e4",
+      "event_id": "34f8d56b-9abd-420a-8ee7-d7cac287f574",
+      "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
       "payload": {
-        "authorization_code": "BL629512",
-        "confirmation_url": "http://127.0.0.1:64427/order/BL-02F26A17",
-        "order_number": "BL-02F26A17",
+        "authorization_code": "BL598112",
+        "confirmation_url": "http://127.0.0.1:8200/order/BL-DFBD782B",
+        "order_number": "BL-DFBD782B",
         "response_code": "00",
-        "screenshot_path": "/Users/spectre14/mandate-guard/evidence/sample/screenshots/BL-02F26A17.png",
-        "screenshot_sha256": "8784aa40dccba0d84d997d97ac930fc940f0ddfa6e8ddf6bc60da8910140900a"
+        "screenshot_path": "/Users/spectre14/mandate-guard/evidence/demo/screenshots/BL-DFBD782B.png",
+        "screenshot_sha256": "e5b688d21bf538d0fea8579a611cdb8340d9ac8f151f4fe03e8a5625450bb566"
       },
-      "prev_hash": "6f0cd04ceaa49b3a19c99e30ec4adf940f0036a5a6040500e51cde0369d80d75",
-      "ts": "2026-08-01T17:53:03.152Z",
+      "prev_hash": "e6e4951dcdc1fb9d6820fadb68e9c52a1b346e2f5357cfbee3a304367dda9d68",
+      "ts": "2026-08-01T19:10:10.643Z",
       "type": "CHECKOUT_EXECUTED"
     },
     {
-      "event_hash": "755d23b215fe2ced2030883f0fcf3e1568bd19ecf119259369e632e1d1ce5d3d",
-      "event_id": "de32b065-5fce-4e76-afbb-cfb4e53bc091",
-      "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+      "event_hash": "017f0b1c5d7adc00c35940bb12a51da31a06e04fa464e6bcdd4b2d290e3d2d3a",
+      "event_id": "53c59786-84c4-49f3-8e33-f5a582115d5b",
+      "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
       "payload": {
-        "authorization_code": "BL629512",
+        "authorization_code": "BL598112",
         "response_code": "00",
-        "txn_ref_id": "tli_01KYZ7AFQR0003D9W6DFZKZ3Y6",
+        "txn_ref_id": "tli_01KYZBPV3NNB3ECP34HDDQ5VS8",
         "txn_status": "APPROVED",
         "visa_confirmation": "SUCCESS"
       },
-      "prev_hash": "c06df971a106ac35d64ae9db02ecc42045ec6b285f9244595522edb43f03f3ee",
-      "ts": "2026-08-01T17:53:03.153Z",
+      "prev_hash": "0298edd07f8ae7e15cb72c40aaee4c5a32fcb6dc07f5e8aa432e1a8cb23150e4",
+      "ts": "2026-08-01T19:10:10.856Z",
       "type": "STATUS_REPORTED"
     },
     {
-      "event_hash": "8d57311081eecc2677414689a35cb83618c59b6b6ae6558c138e3dea303d8590",
-      "event_id": "85dbb02c-e77d-4fd6-b935-455f3bbf55fb",
-      "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+      "event_hash": "33fac786020cd4aaf9e0d2031100118ef3466f32c7f5fd73f931179f0a465020",
+      "event_id": "219bdcbf-1565-4810-9c0e-534a55a584d8",
+      "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
       "payload": {
-        "order_number": "BL-02F26A17",
-        "session_id": "ses_01KYZ7AFQP000FHYZB7EXND8Q6"
+        "order_number": "BL-DFBD782B",
+        "session_id": "ses_01KYZBDEGN8P1HWEWC2X585Z0T"
       },
-      "prev_hash": "755d23b215fe2ced2030883f0fcf3e1568bd19ecf119259369e632e1d1ce5d3d",
-      "ts": "2026-08-01T17:53:03.153Z",
+      "prev_hash": "017f0b1c5d7adc00c35940bb12a51da31a06e04fa464e6bcdd4b2d290e3d2d3a",
+      "ts": "2026-08-01T19:10:10.856Z",
       "type": "MANDATE_CONSUMED"
     }
   ],
   "gate": {
     "failed_rule_ids": [],
-    "proposal_id": "7b02a1f2-a4a5-40b4-b01a-b6f035eef3b6",
+    "proposal_id": "c30a20dc-845f-4cd7-8b03-6e380dad5a8b",
     "results": [
       {
         "actual": "host=beanline.example.com name=BEANLINECOFFEE",
@@ -557,8 +557,8 @@
         "rule_id": "R5"
       },
       {
-        "actual": "status=confirmed now=2026-08-01T17:52:53.384033+00:00",
-        "expected": "status=confirmed and now<2026-08-01T18:06:53.384033+00:00",
+        "actual": "status=confirmed now=2026-08-01T19:04:16.762090+00:00",
+        "expected": "status=confirmed and now<2026-08-01T19:18:16.762090+00:00",
         "name": "window_valid",
         "pass": true,
         "rule_id": "R6"
@@ -575,7 +575,7 @@
   },
   "gate_blocked": null,
   "mandate": {
-    "confirmed_at": "2026-08-01T17:51:53.384033Z",
+    "confirmed_at": "2026-08-01T19:03:16.762090Z",
     "constraints": {
       "currency": "USD",
       "effective_minutes": 15,
@@ -601,10 +601,10 @@
       "price_ceiling_total": "30.00",
       "substitution_policy": "none"
     },
-    "created_at": "2026-08-01T17:51:53.384033Z",
+    "created_at": "2026-08-01T19:03:16.762090Z",
     "intent_text": "Buy a bag of house blend and two boxes of filters from Beanline, under $30.",
-    "mandate_hash": "97e59cc99b6eef82f8e20da257c2afe56423b8461be4cba66d59cca0d6297de8",
-    "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+    "mandate_hash": "8d1d37bce372d8f7ae74d7436ee5e46e310fb4d1db61bba3f69243afdb7193b7",
+    "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
     "status": "confirmed",
     "user": {
       "user_email": "shivanshamba@mhub.org",
@@ -612,7 +612,7 @@
     },
     "version": "1.0"
   },
-  "narrative": "Outcome: COMPLETED. The request was to buy a bag of house blend and two boxes of filters from Beanline Coffee for under $30. Currency: USD.\n\nGate verdict: PASS. No failed rules. Visa confirmation: SUCCESS. Chain validation: true.\n\nOrder number: BL-02F26A17. Event count: 11.",
+  "narrative": "Record shows a completed purchase: buy a bag of house blend and two boxes of filters from Beanline Coffee for under $30 (USD). Order number: BL-DFBD782B.\n\nAuthorization and screening details: gateway verdict = PASS; Visa confirmation = SUCCESS; no failed rules listed; chain_valid = true.\n\nAdditional metadata: outcome = COMPLETED; event_count = 11.",
   "narrative_label": "Narrative (AI-generated summary of the deterministic record below)",
   "outcome": "COMPLETED",
   "packet_version": "1.0",
@@ -632,11 +632,11 @@
         }
       ],
       "page_total": "27.00",
-      "url": "http://127.0.0.1:64427/checkout"
+      "url": "http://127.0.0.1:8200/checkout"
     },
     "origin_disclosure": {
       "canonical_merchant_url": "https://beanline.example.com",
-      "declared_origin": "http://127.0.0.1:64427",
+      "declared_origin": "http://127.0.0.1:8200",
       "observed_host": "127.0.0.1"
     },
     "results": [
@@ -690,10 +690,10 @@
   "proposal": {
     "agent_meta": {
       "model": "gpt-5-mini",
-      "rationale": "The agent selected one Beanline House Blend 12oz priced at 12.50 and two Paper Filters 100ct priced at 7.25 each, corresponding to the requested bag of house blend and two boxes of filters. The item prices sum to a total of 27.00 USD and no items are marked unavailable.",
+      "rationale": "The agent selected Beanline House Blend 12oz (x1) and Paper Filters 100ct (x2) because the user requested one bag of house blend and two boxes of filters from Beanline. The data shows prices of $12.50 for the coffee and $7.25 per filter box, totaling $27.00, with no items marked unavailable.",
       "unavailable_product_ids": []
     },
-    "created_at": "2026-08-01T17:52:53Z",
+    "created_at": "2026-08-01T19:04:16Z",
     "line_items": [
       {
         "description": "Beanline House Blend 12oz",
@@ -708,26 +708,26 @@
         "unit_price": "7.25"
       }
     ],
-    "mandate_id": "7cb24317-cee1-4575-bc0e-ccf770896084",
+    "mandate_id": "f3f9cdc6-a74e-4ab9-a0ed-70ceb50af6f4",
     "merchant": {
       "name": "Beanline Coffee",
       "url": "https://beanline.example.com"
     },
-    "proposal_id": "7b02a1f2-a4a5-40b4-b01a-b6f035eef3b6",
+    "proposal_id": "c30a20dc-845f-4cd7-8b03-6e380dad5a8b",
     "proposed_total": "27.00"
   },
   "report": {
-    "authorization_code": "BL629512",
+    "authorization_code": "BL598112",
     "response_code": "00",
-    "txn_ref_id": "tli_01KYZ7AFQR0003D9W6DFZKZ3Y6",
+    "txn_ref_id": "tli_01KYZBPV3NNB3ECP34HDDQ5VS8",
     "txn_status": "APPROVED",
     "visa_confirmation": "SUCCESS"
   },
   "session": {
     "attempt": 1,
-    "expires_at": "2026-08-01T18:08:02.710Z",
-    "external_order_ref": "97e59cc99b6eef82f8e20da257c2afe56423b8461be4cba66d59cca0d6297de8.01",
-    "order_id": "ord_01KYZ7AFQP000MTDYB21KS05CX",
+    "expires_at": "2026-08-01T19:19:34.070Z",
+    "external_order_ref": "8d1d37bce372d8f7ae74d7436ee5e46e310fb4d1db61bba3f69243afdb7193b7.01",
+    "order_id": "ord_01KYZBDEGPZX4SWMA6KG29ER7F",
     "purchase_context": [
       {
         "merchant_details": {
@@ -751,6 +751,6 @@
         ]
       }
     ],
-    "session_id": "ses_01KYZ7AFQP000FHYZB7EXND8Q6"
+    "session_id": "ses_01KYZBDEGN8P1HWEWC2X585Z0T"
   }
 }

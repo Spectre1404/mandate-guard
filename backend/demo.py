@@ -45,10 +45,10 @@ def free_port():
         return sock.getsockname()[1]
 
 
-def start_storefront():
+def start_storefront(port=None):
     import uvicorn
 
-    port = free_port()
+    port = port or free_port()
     server = uvicorn.Server(
         uvicorn.Config(storefront_app, host="127.0.0.1", port=port, log_level="warning")
     )
@@ -109,19 +109,76 @@ def _writers(live):
     )
 
 
-def run_scenario(scenario, out_dir, live_llm=True, ledger_dir=None, log=print):
+def build_prava(mode):
+    """Return (client, describe, teardown) for `fake` or `real`.
+
+    The default is ALWAYS `fake`. Choosing `real` is a per-invocation decision --
+    a flag on the command, never a change to `.env` -- so no test or later run can
+    inherit it by accident. The base URL and secret key come from
+    `backend.config.settings()`, where a process environment variable wins over
+    `.env`, so a run-scoped `PRAVA_BASE_URL=... ` prefix also works without editing
+    any file.
+    """
+    if mode == "real":
+        from backend.config import require, settings
+
+        base_url = settings()["prava_base_url"]
+        client = PravaClient(base_url=base_url, secret_key=require("prava_secret_key"))
+        return client, f"REAL SANDBOX {base_url}", (lambda: None)
+
+    if mode != "fake":
+        raise ValueError(f"unknown prava mode: {mode!r}")
+
+    transport = TestClient(fake_prava_app)
+    transport.__enter__()
+    transport.post("/_control/reset")
+    client = PravaClient(
+        base_url="", secret_key="sk_test_fake", session=transport, sleep=lambda _: None
+    )
+    # The fake exposes a control route standing in for the human at the hosted page.
+    _auto_approve(client, transport)
+
+    def teardown():
+        transport.post("/_control/reset")
+        transport.__exit__(None, None, None)
+
+    return client, "fake_prava (local, no quota)", teardown
+
+
+def run_scenario(
+    scenario,
+    out_dir,
+    live_llm=True,
+    ledger_dir=None,
+    log=print,
+    prava="fake",
+    storefront_port=None,
+    on_session=None,
+):
     """Run `happy` or `blocked` end to end and export the evidence packet."""
     if scenario not in ("happy", "blocked"):
         raise ValueError(f"unknown scenario: {scenario!r}")
+    if scenario == "blocked" and prava == "real":
+        # A blocked run never reaches Prava, so pointing it at the real sandbox
+        # would spend nothing and prove nothing. Refuse rather than imply otherwise.
+        raise ValueError(
+            "the blocked scenario never calls Prava; run it against fake_prava"
+        )
 
     drift = "price_hike" if scenario == "blocked" else "none"
     catalog_module.set_drift(drift)
-    log(f"scenario: {scenario}  ·  storefront drift: {drift}")
+    server, storefront_url = start_storefront(storefront_port)
+    client, prava_label, teardown_prava = build_prava(prava)
 
-    server, storefront_url = start_storefront()
+    log(f"scenario: {scenario}  ·  drift: {drift}  ·  prava: {prava_label}")
+    log(f"storefront: {storefront_url}")
+
     rationale_writer, narrative_writer, agent_model = _writers(live_llm)
 
     try:
+        if prava == "real":
+            # Quota-free reachability check before spending a session.
+            log(f"health: {client.health()}")
         mandate, now = build_demo_mandate()
         log(f"mandate_hash: {mandate['mandate_hash']}")
 
@@ -136,56 +193,72 @@ def run_scenario(scenario, out_dir, live_llm=True, ledger_dir=None, log=print):
         )
         log(f"agent proposed: {proposal['proposed_total']} (model: {agent_model})")
 
-        with TestClient(fake_prava_app) as prava:
-            prava.post("/_control/reset")
-            client = PravaClient(
-                base_url="", secret_key="sk_test_fake", session=prava, sleep=lambda _: None
-            )
-            _auto_approve(client, prava)
+        from playwright.sync_api import sync_playwright
 
-            from playwright.sync_api import sync_playwright
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch()  # tracing deliberately off
+            page = browser.new_page()
 
-            with sync_playwright() as playwright:
-                browser = playwright.chromium.launch()  # tracing deliberately off
-                page = browser.new_page()
-
-                def executor_factory(ledger, mandate_id):
-                    return CheckoutExecutor(
-                        page=page,
-                        storefront_url=storefront_url,
-                        ledger=ledger,
-                        mandate_id=mandate_id,
-                        screenshot_dir=os.path.join(out_dir, "screenshots"),
-                        origin_map=build_origin_map({"Beanline Coffee": storefront_url}),
-                    )
-
-                orchestrator = Orchestrator(
-                    client=client, executor_factory=executor_factory
-                )
-
-                blocked = None
-                result = None
-                try:
-                    result = orchestrator.run(
-                        mandate, proposal, now=now, cardholder_name=CARDHOLDER
-                    )
-                    ledger = result["ledger"]
-                    log(f"visa_confirmation: {result['visa_confirmation']}")
-                    log(f"order_number:      {result['order_number']}")
-                except GateBlocked as exc:
-                    blocked = exc
-                    ledger = exc.ledger
-                    log(f"GATE BLOCKED — failed rules: {exc.verdict['failed_rule_ids']}")
-                    log("no payment session was created; no credential was ever issued")
-
-                packet = export_packet(
-                    ledger,
-                    out_dir,
-                    basename=f"evidence-{scenario}",
-                    narrative_writer=narrative_writer,
+            def executor_factory(ledger, mandate_id):
+                return CheckoutExecutor(
                     page=page,
+                    storefront_url=storefront_url,
+                    ledger=ledger,
+                    mandate_id=mandate_id,
+                    screenshot_dir=os.path.join(out_dir, "screenshots"),
+                    origin_map=build_origin_map({"Beanline Coffee": storefront_url}),
                 )
-                browser.close()
+
+            orchestrator = Orchestrator(client=client, executor_factory=executor_factory)
+
+            def announce(session):
+                log(f"session_id:  {session['session_id']}")
+                log(f"order_id:    {session['order_id']}")
+                log(f"expires_at:  {session['expires_at']}")
+                if prava == "real":
+                    log("")
+                    log("=" * 72)
+                    log("OPEN THIS IN CHROME AND COMPLETE THE PAYMENT:")
+                    log("")
+                    log(f"  {session['iframe_url']}")
+                    log("")
+                    log("  First use of a card on this browser: issuer OTP FIRST,")
+                    log("  then register a passkey. Expect a hand-off to the card")
+                    log("  network's own domain for the biometric step.")
+                    log("=" * 72)
+                    log("")
+                log("polling payment-result...")
+                if on_session:
+                    on_session(session)
+
+            blocked = None
+            result = None
+            try:
+                result = orchestrator.run(
+                    mandate,
+                    proposal,
+                    now=now,
+                    cardholder_name=CARDHOLDER,
+                    on_session=announce,
+                )
+                ledger = result["ledger"]
+                log(f"status transitions: {result['status_transitions']}")
+                log(f"visa_confirmation:  {result['visa_confirmation']}")
+                log(f"order_number:       {result['order_number']}")
+            except GateBlocked as exc:
+                blocked = exc
+                ledger = exc.ledger
+                log(f"GATE BLOCKED — failed rules: {exc.verdict['failed_rule_ids']}")
+                log("no payment session was created; no credential was ever issued")
+
+            packet = export_packet(
+                ledger,
+                out_dir,
+                basename=f"evidence-{scenario}",
+                narrative_writer=narrative_writer,
+                page=page,
+            )
+            browser.close()
 
         ledger_path = None
         if ledger_dir:
@@ -197,6 +270,7 @@ def run_scenario(scenario, out_dir, live_llm=True, ledger_dir=None, log=print):
 
         return {
             "scenario": scenario,
+            "prava": prava,
             "ledger": ledger,
             "ledger_path": ledger_path,
             "packet": packet,
@@ -205,6 +279,7 @@ def run_scenario(scenario, out_dir, live_llm=True, ledger_dir=None, log=print):
             "storefront_url": storefront_url,
         }
     finally:
+        teardown_prava()
         server.should_exit = True
         catalog_module.set_drift("none")
 
