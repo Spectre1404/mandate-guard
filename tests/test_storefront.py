@@ -13,8 +13,8 @@ from storefront import catalog as catalog_module
 from storefront.app import app
 from storefront.processor import APPROVED, DECLINED, authorize, luhn_ok
 
-def _synthetic_visa():
-    """A Luhn-valid Visa-prefixed number generated at runtime.
+def _synthetic_card(first_digit=4, seed=20260801):
+    """A Luhn-valid card number generated at runtime.
 
     Deliberately NOT a literal: sandbox test card numbers must never appear in
     this repository (SPEC §12), and a hardcoded PAN here would be exactly that
@@ -22,8 +22,8 @@ def _synthetic_visa():
     """
     import random
 
-    rng = random.Random(20260801)
-    digits = [4] + [rng.randint(0, 9) for _ in range(14)]
+    rng = random.Random(seed)
+    digits = [first_digit] + [rng.randint(0, 9) for _ in range(14)]
     checksum = 0
     for index, digit in enumerate(reversed(digits)):
         if index % 2 == 0:
@@ -35,7 +35,8 @@ def _synthetic_visa():
     return "".join(str(d) for d in digits)
 
 
-GOOD_CARD = _synthetic_visa()
+GOOD_CARD = _synthetic_card(first_digit=4)
+NON_VISA_CARD = _synthetic_card(first_digit=5, seed=20260802)
 GOOD_EXPIRY = "12/30"
 GOOD_CVV = "321"
 GOOD_NAME = "Shiv A"
@@ -83,8 +84,7 @@ def test_response_code_fits_pravas_two_character_cap():
 
 
 def test_non_visa_card_is_declined():
-    mastercard = "5555555555554444"
-    decision = authorize(mastercard, GOOD_EXPIRY, GOOD_CVV, GOOD_NAME)
+    decision = authorize(NON_VISA_CARD, GOOD_EXPIRY, GOOD_CVV, GOOD_NAME)
 
     assert not decision["approved"]
     assert decision["response_code"] == DECLINED
@@ -183,7 +183,7 @@ def test_declined_payment_returns_to_checkout_with_an_error(client):
         "/checkout",
         data={
             "cardholder_name": GOOD_NAME,
-            "card_number": "5555555555554444",
+            "card_number": NON_VISA_CARD,
             "expiry": GOOD_EXPIRY,
             "cvv": GOOD_CVV,
         },

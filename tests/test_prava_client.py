@@ -225,7 +225,8 @@ def test_unknown_status_does_not_raise(client, verified, monkeypatch):
                         "line_items": [
                             {
                                 "txn_ref_id": "tli_1",
-                                "token": "4000000000000000",
+                                # Only needs to be truthy; no PAN-shaped literal required.
+                                "token": "token-stub-9563",
                                 "dynamic_cvv": "123",
                                 "expiry_month": "12",
                                 "expiry_year": "2027",
