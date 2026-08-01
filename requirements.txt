@@ -1,9 +1,13 @@
+# Pinned to the versions this project was built and demoed with.
+# Setup:  python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+# Playwright's browser binary is a separate step: .venv/bin/playwright install chromium
+
 # Runtime
-fastapi
-uvicorn
-requests
-openai            # compiler extraction, agent rationale, export narrative only
-playwright        # checkout executor + PDF export
+fastapi==0.141.1
+uvicorn==0.52.0
+requests==2.34.2
+openai==2.52.0            # compiler extraction, agent rationale, export narrative only
+playwright==1.62.0        # checkout executor + PDF export
 
 # Dev
-pytest
+pytest==9.1.1
