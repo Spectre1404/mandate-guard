@@ -5,6 +5,7 @@
 # Runtime
 fastapi==0.141.1
 uvicorn==0.52.0
+python-multipart==0.0.32  # required by FastAPI to parse the storefront's checkout form
 requests==2.34.2
 openai==2.52.0            # compiler extraction, agent rationale, export narrative only
 playwright==1.62.0        # checkout executor + PDF export
