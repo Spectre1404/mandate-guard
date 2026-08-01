@@ -280,6 +280,43 @@ def test_html_shows_the_masked_token_only(completed):
         assert forbidden not in html
 
 
+def test_rule_values_are_split_into_one_atom_per_line(completed):
+    """Long reprs forced mid-token wrapping; a price split as '12.5 / 0' is not
+    acceptable in an evidence document, so lists become one line each."""
+    from backend.export.render import _value_lines
+
+    assert _value_lines(["BL-HOUSE-12<=14.00", "BL-FILTER-100<=8.00"]) == [
+        "BL-HOUSE-12<=14.00",
+        "BL-FILTER-100<=8.00",
+    ]
+    assert _value_lines({"BL-HOUSE-12": 1}) == ["BL-HOUSE-12: 1"]
+    assert _value_lines("total=27.00") == ["total=27.00"]
+    assert _value_lines([]) == ["(none)"]
+
+
+def test_comparison_cells_never_use_break_all(completed):
+    """`word-break: break-all` was the exact cause of money splitting mid-number."""
+    from backend.export.render import PRINT_CSS
+
+    vals_rule = PRINT_CSS.split(".cmp .vals {")[1].split("}")[0]
+    assert "break-all" not in vals_rule
+    assert "word-break: normal" in vals_rule
+    assert "overflow-wrap: break-word" in vals_rule
+
+
+def test_gate_table_stacks_expected_and_actual_in_one_cell(completed):
+    evidence = build_evidence(completed)
+    evidence["narrative"] = "x"
+
+    html = render_evidence_html(evidence)
+
+    assert "Verification detail" in html
+    assert '<th class="w-detail">' in html
+    assert '<td class="cmp">' in html
+    # The old two-narrow-column layout is gone.
+    assert "<th>Expected</th><th>Actual</th>" not in html
+
+
 def test_a_verified_chain_is_coloured_as_a_pass_not_a_failure(completed):
     """A packet claiming success in the colour of failure is worse than no colour.
 

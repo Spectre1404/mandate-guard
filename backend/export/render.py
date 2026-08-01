@@ -24,6 +24,10 @@ PRINT_CSS = """
   th, td { text-align: left; padding: 1.6mm 2mm; border-bottom: 1px solid #e3e5ea;
            vertical-align: top; }
   th { color: #5b6270; font-weight: 600; width: 38%; }
+  th.w-rule { width: 11mm; } th.w-name { width: 34mm; } th.w-res { width: 15mm; }
+  /* Without this the detail column inherits th{width:38%} and squeezes values
+     into needless wrapping. */
+  th.w-detail { width: auto; }
   td.num, th.num { font-variant-numeric: tabular-nums; }
   .mono { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 8.5pt;
           word-break: break-all; }
@@ -39,6 +43,15 @@ PRINT_CSS = """
                     font-size: 8pt; padding: 0.8mm 2mm; border-radius: 1mm;
                     letter-spacing: 0.04em; margin-bottom: 2mm; }
   img.shot { width: 100%; border: 1px solid #d6d9e0; border-radius: 2mm; margin-top: 2mm; }
+  td.cmp { padding: 1.6mm 2mm; }
+  .cmp-row { display: flex; gap: 2.5mm; margin: 0.4mm 0; }
+  .cmp .lbl { flex: 0 0 18mm; min-width: 0; color: #5b6270; font-size: 7.5pt;
+              text-transform: uppercase; letter-spacing: 0.04em; padding-top: 0.3mm; }
+  /* 18mm fits the word EXPECTED. A narrower basis lets the wider label expand past
+     it (min-width:auto), which shifts Expected's values out of line with Actual's. */
+  /* break-word breaks only a word that cannot fit at all -- never inside a price. */
+  .cmp .vals { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 8.5pt;
+               word-break: normal; overflow-wrap: break-word; hyphens: none; }
   .missing { color: #8a9099; font-style: italic; }
   section { page-break-inside: avoid; }
   .foot { margin-top: 8mm; padding-top: 3mm; border-top: 1px solid #e3e5ea;
@@ -79,6 +92,42 @@ def _verdict(value, ok=None):
 def _chain_verdict(valid):
     """Booleans must read as a verdict, not as Python. 'True' is not evidence language."""
     return _verdict("VERIFIED" if valid else "BROKEN", ok=valid)
+
+
+def _value_lines(value):
+    """Break a rule's expected/actual into short atoms, one per line.
+
+    The gate reports lists (`['BL-HOUSE-12<=14.00', ...]`) and dicts. Rendering
+    those as one long Python repr forced mid-token wrapping -- and in an evidence
+    document a price that wraps as '12.5 / 0' is not acceptable at any width. One
+    atom per line keeps every line short enough that it never needs to break.
+    """
+    if isinstance(value, dict):
+        return [f"{key}: {value[key]}" for key in value]
+    if isinstance(value, (list, tuple)):
+        return [str(item) for item in value] or ["(none)"]
+    return [str(value)]
+
+
+def _cmp_cell(expected, actual):
+    """Expected and actual stacked as labelled lines in one wide cell.
+
+    Two narrow columns were the root of the wrapping problem. One wide cell with
+    stacked labels gives each value the full width of the table, and `.vals` uses
+    `overflow-wrap: break-word` (which only breaks a word that cannot fit at all)
+    rather than `word-break: break-all` (which breaks anywhere, including inside a
+    number).
+    """
+    def block(label, value):
+        lines = "".join(f"<div>{_t(line)}</div>" for line in _value_lines(value))
+        return (
+            f'<div class="cmp-row"><span class="lbl">{label}</span>'
+            f'<div class="vals">{lines}</div></div>'
+        )
+
+    return (
+        f'<td class="cmp">{block("Expected", expected)}{block("Actual", actual)}</td>'
+    )
 
 
 def render_evidence_html(evidence):
@@ -190,7 +239,7 @@ def _gate_section(gate, blocked, cats):
     rows = "".join(
         f"<tr><td>{_t(r['rule_id'])}</td><td>{_t(r['name'])}</td>"
         f"<td>{_verdict('PASS' if r['pass'] else 'FAIL', ok=r['pass'])}</td>"
-        f"<td class='mono'>{_t(r['expected'])}</td><td class='mono'>{_t(r['actual'])}</td></tr>"
+        f"{_cmp_cell(r['expected'], r['actual'])}</tr>"
         for r in gate["results"]
     )
     blocked_note = (
@@ -201,7 +250,8 @@ def _gate_section(gate, blocked, cats):
     return f"""<section><h2>4. Verification gate — was the agent allowed to buy this?</h2>
       <p class="cat">{escape(cats['gate'])}</p>
       <p>Verdict: {_verdict(gate['verdict'])}</p>{blocked_note}
-      <table><tr><th>Rule</th><th>Name</th><th>Result</th><th>Expected</th><th>Actual</th></tr>
+      <table><tr><th class="w-rule">Rule</th><th class="w-name">Name</th>
+      <th class="w-res">Result</th><th class="w-detail">Verification detail</th></tr>
       {rows}</table></section>"""
 
 
@@ -247,7 +297,7 @@ def _precheck_section(precheck, cats):
     rows = "".join(
         f"<tr><td>{_t(r['rule_id'])}</td><td>{_t(r['name'])}</td>"
         f"<td>{_verdict('PASS' if r['pass'] else 'FAIL', ok=r['pass'])}</td>"
-        f"<td class='mono'>{_t(r['expected'])}</td><td class='mono'>{_t(r['actual'])}</td></tr>"
+        f"{_cmp_cell(r['expected'], r['actual'])}</tr>"
         for r in precheck["results"]
     )
     disclosure = precheck.get("origin_disclosure") or {}
@@ -261,7 +311,8 @@ def _precheck_section(precheck, cats):
     return f"""<section><h2>7. Point-of-sale re-verification</h2>
       <p class="cat">{escape(cats['precheck'])}</p>
       <p>Verdict: {_verdict(precheck['verdict'])}</p>
-      <table><tr><th>Check</th><th>Name</th><th>Result</th><th>Expected</th><th>Actual</th></tr>
+      <table><tr><th class="w-rule">Check</th><th class="w-name">Name</th>
+      <th class="w-res">Result</th><th class="w-detail">Verification detail</th></tr>
       {rows}</table>
       <table>{origin_rows}</table></section>"""
 

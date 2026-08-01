@@ -24,7 +24,7 @@ sys.path.insert(0, REPO_ROOT)
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from backend.agent.shopper import propose  # noqa: E402
+from backend.agent.shopper import OpenAIRationaleWriter, propose  # noqa: E402
 from backend.compiler.mandate import build_draft, confirm  # noqa: E402
 from backend.compiler.validate import validate_constraints  # noqa: E402
 from backend.executor.runner import CheckoutExecutor  # noqa: E402
@@ -104,7 +104,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default=DEFAULT_OUT)
     parser.add_argument(
-        "--no-narrative", action="store_true", help="skip the live gpt-5-mini call"
+        "--no-narrative", action="store_true", help="skip all live gpt-5-mini calls (narrative and agent rationale)"
     )
     args = parser.parse_args()
 
@@ -116,8 +116,25 @@ def main():
     mandate = build_mandate(now)
     print(f"mandate_hash: {mandate['mandate_hash']}")
 
-    proposal = propose(mandate, catalog_module.catalog(), created_at=now)
+    # Live rationale writer by default: agent_meta.model lands in the packet's
+    # "Agent model" field, which is OpenAI-track evidence sitting in the artifact.
+    # Tests always inject a stub instead; the live writer is only a default here.
+    if args.no_narrative:
+        rationale_writer, agent_model = None, "deterministic"
+    else:
+        agent_model = "gpt-5-mini"
+        rationale_writer = OpenAIRationaleWriter(model=agent_model)
+
+    proposal = propose(
+        mandate,
+        catalog_module.catalog(),
+        created_at=now,
+        rationale_writer=rationale_writer,
+        model=agent_model,
+    )
     print(f"proposed total: {proposal['proposed_total']}")
+    print(f"agent model:    {proposal['agent_meta']['model']}")
+    print(f"rationale:      {proposal['agent_meta']['rationale']}")
 
     with TestClient(fake_prava_app) as prava:
         prava.post("/_control/reset")
