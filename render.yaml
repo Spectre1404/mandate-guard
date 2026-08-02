@@ -1,27 +1,38 @@
-# Fallback host if Railway fights us. Two services, one Dockerfile.
+# Hosted demo: two web services, one Dockerfile, distinguished by $SERVICE.
+#
+# Deliberately NO startCommand / dockerCommand override. The Dockerfile's
+# entrypoint script does its own variable expansion, and an override here would
+# be run without a shell — exactly the bug that poisoned the Railway attempt.
 services:
   - type: web
     name: mandate-guard
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: starter
+    region: oregon
+    autoDeploy: true
+    healthCheckPath: /health
     envVars:
       - key: SERVICE
         value: ledger_ui
       - key: MANDATE_GUARD_HOSTED
         value: "1"
-      - key: MANDATE_GUARD_STOREFRONT_URL
-        sync: false
-      - key: MANDATE_GUARD_PUBLIC_URL
-        sync: false
+      # Pasted at Apply time; never stored in the repo.
       - key: OPENAI_API_KEY
         sync: false
+      # MANDATE_GUARD_STOREFRONT_URL and MANDATE_GUARD_PUBLIC_URL are deliberately
+      # omitted: neither domain exists until Render has deployed. Both are added in
+      # the dashboard after the first deploy. Until then the dashboard falls back to
+      # its in-process catalogue and prints "catalogue read local".
 
   - type: web
-    name: mandate-guard-store
+    name: mandate-guard-storefront
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: starter
+    region: oregon
+    autoDeploy: true
+    healthCheckPath: /health
     envVars:
       - key: SERVICE
         value: storefront

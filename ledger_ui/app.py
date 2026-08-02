@@ -864,6 +864,12 @@ def tamper(ledger_id: str, request: Request):
     return RedirectResponse(f"/ledger/{new_id}?verified=1&forged={forged_event}", status_code=303)
 
 
+@app.get("/health")
+def health():
+    """Liveness probe for the host. Cheap and dependency-free on purpose."""
+    return {"status": "ok", "service": "ledger_ui"}
+
+
 @app.get("/og-image.png")
 def og_image():
     shot = os.path.join(REPO_ROOT, "evidence", "sample", "screenshots", "dashboard.png")

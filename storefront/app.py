@@ -346,6 +346,12 @@ def admin_drift(mode: str = Form(...)):
     return RedirectResponse("/_admin", status_code=303)
 
 
+@app.get("/health")
+def health():
+    """Liveness probe for the host. Cheap and dependency-free on purpose."""
+    return {"status": "ok", "service": "storefront"}
+
+
 @app.get("/_catalog.json")
 def catalog_json():
     """The live catalogue, for the hosted dashboard to snapshot at click time.
