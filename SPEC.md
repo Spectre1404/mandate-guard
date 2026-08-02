@@ -215,7 +215,7 @@ Flow: open `iframe_url` in the user's browser → user selects sandbox Visa test
 ```
 mandate-guard/
   backend/   (fastapi: compiler/, gate/, ledger/, prava_client/, executor/)
-  frontend/  (next.js)
+  ledger_ui/ (server-rendered: mandate lifecycle dashboard + ledger browser)
   storefront/ (fastapi or next route group + mock processor)
   fake_prava/
   tests/     (gate rules, hash chain, payload mapping)
