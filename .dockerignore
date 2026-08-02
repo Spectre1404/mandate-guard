@@ -1,0 +1,17 @@
+.git
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+.env
+tests
+spike
+scripts
+evidence/demo
+evidence/ledgers
+evidence/exports
+evidence/sample/screenshots
+!evidence/sample/screenshots/dashboard.png
+README.md
+SPEC.md
+DISCLOSURE.md
