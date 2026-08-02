@@ -89,6 +89,10 @@ def ui(tmp_path, monkeypatch):
     directory.mkdir()
     monkeypatch.setenv("MANDATE_GUARD_LEDGER_DIR", str(directory))
     monkeypatch.setenv("MANDATE_GUARD_EXPORT_DIR", str(tmp_path / "exports"))
+    # Isolate from the committed seed ledgers: startup restores them into the
+    # ledger dir, which would otherwise pollute every count in this file.
+    (tmp_path / "empty-seeds").mkdir(exist_ok=True)
+    monkeypatch.setenv("MANDATE_GUARD_SEED_DIR", str(tmp_path / "empty-seeds"))
 
     import importlib
 

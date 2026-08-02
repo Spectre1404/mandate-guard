@@ -56,6 +56,22 @@ def html_to_pdf(html, path, page=None):
     return path
 
 
+def export_json_only(ledger, output_dir, basename="evidence", narrative_writer=None):
+    """The packet as JSON, with no PDF render.
+
+    The hosted demo has no browser, so it cannot print a PDF. The JSON is the
+    complete record either way -- the PDF is a rendering of it.
+    """
+    evidence = build_evidence(ledger)
+    evidence["narrative"] = write_narrative(evidence, narrative_writer)
+
+    os.makedirs(output_dir, exist_ok=True)
+    path = os.path.join(output_dir, f"{basename}.json")
+    with open(path, "w") as handle:
+        json.dump(evidence, handle, indent=2, sort_keys=True)
+    return path
+
+
 def export_packet(ledger, output_dir, basename="evidence", narrative_writer=None, page=None):
     """Build the packet once and write both artifacts from it.
 

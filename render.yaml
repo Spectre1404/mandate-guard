@@ -1,0 +1,29 @@
+# Fallback host if Railway fights us. Two services, one Dockerfile.
+services:
+  - type: web
+    name: mandate-guard
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    envVars:
+      - key: SERVICE
+        value: ledger_ui
+      - key: MANDATE_GUARD_HOSTED
+        value: "1"
+      - key: MANDATE_GUARD_STOREFRONT_URL
+        sync: false
+      - key: MANDATE_GUARD_PUBLIC_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
+  - type: web
+    name: mandate-guard-store
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    envVars:
+      - key: SERVICE
+        value: storefront
+      - key: MANDATE_GUARD_HOSTED
+        value: "1"

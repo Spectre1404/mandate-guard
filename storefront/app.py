@@ -19,6 +19,7 @@ below are part of the contract with the executor:
 Run:  .venv/bin/uvicorn storefront.app:app --port 8200
 """
 
+import os
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -54,6 +55,8 @@ STYLE = """
        font-size:15px;box-sizing:border-box}
   label{display:block;margin:12px 0 4px;font-size:14px;font-weight:600}
   .total{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .hosted{background:#eef1f6;border:1px solid #c9ccd4;border-radius:10px;padding:10px 14px;
+       margin:0 0 16px;font-size:13px;color:#3c4250}
   .drift{background:#fff4e5;border:1px solid #ffb547;border-radius:10px;padding:12px 16px;
        margin:0 0 20px;font-size:14px;color:#7a4a00}
   .ok{background:#e8f6ec;border:1px solid #34a853;border-radius:10px;padding:20px}
@@ -63,14 +66,38 @@ STYLE = """
 """
 
 
+HOSTED = os.environ.get("MANDATE_GUARD_HOSTED") == "1"
+HOSTED_NOTE = (
+    "Hosted demo. The full flow — including a real Prava sandbox payment with "
+    "passkey approval — is in the demo video and runs from a fresh clone of the repo."
+)
+OG_IMAGE = os.environ.get("MANDATE_GUARD_OG_IMAGE", "")
+
+
+def _meta(title, description):
+    tags = [
+        f'<meta property="og:title" content="{escape(title)}">',
+        f'<meta property="og:description" content="{escape(description)}">',
+        '<meta property="og:type" content="website">',
+        '<meta name="twitter:card" content="summary_large_image">',
+    ]
+    if OG_IMAGE:
+        tags.append(f'<meta property="og:image" content="{escape(OG_IMAGE)}">')
+    return "".join(tags)
+
+
 def page(title, body):
     banner = drift_banner()
     banner_html = (
         f'<div class="drift" id="drift-banner">{escape(banner)}</div>' if banner else ""
     )
+    hosted_html = (
+        f'<div class="hosted" id="hosted-banner">{escape(HOSTED_NOTE)}</div>' if HOSTED else ""
+    )
     return HTMLResponse(
         f"<!doctype html><html><head><meta charset='utf-8'><title>{escape(title)}</title>"
-        f"<style>{STYLE}</style></head><body>{banner_html}{body}</body></html>"
+        f'{_meta(title, "Demo merchant for Mandate Guard.")}'
+        f"<style>{STYLE}</style></head><body>{hosted_html}{banner_html}{body}</body></html>"
     )
 
 
@@ -317,6 +344,17 @@ def admin_drift(mode: str = Form(...)):
     except ValueError:
         pass
     return RedirectResponse("/_admin", status_code=303)
+
+
+@app.get("/_catalog.json")
+def catalog_json():
+    """The live catalogue, for the hosted dashboard to snapshot at click time.
+
+    The dashboard and the store are separate processes when hosted, so the drift
+    toggle cannot be shared in memory. This is how a visitor's toggle reaches the
+    agent that runs against it.
+    """
+    return {"products": catalog(), "drift": drift_mode()}
 
 
 @app.get("/_admin/state")

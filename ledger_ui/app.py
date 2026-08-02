@@ -41,6 +41,7 @@ Run:  .venv/bin/uvicorn ledger_ui.app:app --port 8300
 """
 
 import os
+from contextlib import asynccontextmanager
 from html import escape
 
 from fastapi import FastAPI
@@ -56,7 +57,72 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LEDGER_DIR = os.environ.get("MANDATE_GUARD_LEDGER_DIR", os.path.join(REPO_ROOT, "evidence", "ledgers"))
 EXPORT_DIR = os.environ.get("MANDATE_GUARD_EXPORT_DIR", os.path.join(REPO_ROOT, "evidence", "exports"))
 
-app = FastAPI(title="Mandate Guard — Ledger")
+@asynccontextmanager
+async def _lifespan(_app):
+    restore_seeds()
+    yield
+
+
+app = FastAPI(title="Mandate Guard — Ledger", lifespan=_lifespan)
+
+
+HOSTED = os.environ.get("MANDATE_GUARD_HOSTED") == "1"
+STOREFRONT_URL = os.environ.get("MANDATE_GUARD_STOREFRONT_URL", "")
+PUBLIC_URL = os.environ.get("MANDATE_GUARD_PUBLIC_URL", "")
+SEED_DIR = os.environ.get(
+    "MANDATE_GUARD_SEED_DIR", os.path.join(REPO_ROOT, "evidence", "seeds")
+)
+HOSTED_NOTE = (
+    "Hosted demo. The full flow — including a real Prava sandbox payment with "
+    "passkey approval — is in the demo video and runs from a fresh clone of the repo."
+)
+SAMPLE_PDF = os.path.join(REPO_ROOT, "evidence", "sample", "evidence-packet.pdf")
+
+# Shared across every endpoint that does work: run, try, tamper.
+RATE_LIMIT_PER_MINUTE = 10
+_HITS = {}
+
+
+def rate_limited(request):
+    """Crude fixed-window limiter, per IP, in memory.
+
+    Adequate for a single-instance demo and honestly labelled as such: it is a
+    courtesy throttle, not a security control.
+    """
+    import time
+
+    ip = (request.client.host if request.client else "?") or "?"
+    now = time.time()
+    hits = [t for t in _HITS.get(ip, []) if now - t < 60]
+    if len(hits) >= RATE_LIMIT_PER_MINUTE:
+        _HITS[ip] = hits
+        return True
+    hits.append(now)
+    _HITS[ip] = hits
+    return False
+
+
+def restore_seeds():
+    """Copy committed seed ledgers into the runtime dir if they are not there.
+
+    The hosted disk is ephemeral across redeploys, so the dashboard would other-
+    wise be empty on first visit. Seeds are copied, never served from, so a
+    visitor's tamper demo can never touch them.
+    """
+    import shutil
+
+    if not os.path.isdir(SEED_DIR):
+        return []
+    os.makedirs(LEDGER_DIR, exist_ok=True)
+    restored = []
+    for name in sorted(os.listdir(SEED_DIR)):
+        if not name.endswith(LEDGER_SUFFIX):
+            continue
+        target = os.path.join(LEDGER_DIR, name)
+        if not os.path.exists(target):
+            shutil.copy(os.path.join(SEED_DIR, name), target)
+            restored.append(name)
+    return restored
 
 
 def _utcnow():
@@ -113,6 +179,22 @@ STYLE = """
   .chip.DECLINED{background:#fef7e0;color:#8a6100}
   .chip.NONE{background:#f1f3f4;color:#5b6270}
   .card{border:1px solid #e3e5ea;border-radius:10px;padding:4px 18px 14px;margin:0 0 22px}
+  .hosted{background:#eef1f6;border:1px solid #c9ccd4;border-radius:10px;padding:11px 16px;
+          margin:0 0 18px;font-size:13px;color:#3c4250}
+  .hero{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 8px}
+  .hero .n{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  .hero .k{font-size:11.5px;color:#5b6270;text-transform:uppercase;letter-spacing:.05em;
+           margin-top:4px}
+  .hero .tile{border:1px solid #e3e5ea;border-radius:12px;padding:16px 22px;min-width:150px}
+  textarea{width:100%;padding:11px;border:1px solid #c9ccd4;border-radius:8px;font-size:14px;
+           font-family:inherit;box-sizing:border-box}
+  .fence{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:0 0 20px}
+  .fence .col{border:1px solid #e3e5ea;border-radius:10px;padding:12px 14px;min-width:0}
+  .fence h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#5b6270;
+            margin:0 0 8px}
+  .fence pre{margin:0;font-family:'SF Mono',Menlo,monospace;font-size:11px;white-space:pre-wrap;
+             word-break:break-word;color:#16181d}
+  @media (max-width:900px){.fence{grid-template-columns:1fr}}
   .derived{margin-top:40px;padding-top:14px;border-top:1px solid #e3e5ea;
            color:#5b6270;font-size:12.5px}
 """
@@ -130,15 +212,41 @@ def nav(active):
         "<nav>"
         + link("/mandates", "Mandates", "mandates")
         + link("/", "Ledger chains", "chains")
+        + link("/try", "Try your own request", "try")
         + "</nav>"
     )
 
 
+OG_DESCRIPTION = (
+    "Mandate Guard decides whether an agent may pay, and proves it afterwards: a "
+    "verification gate before any payment session, and a hash-chained evidence ledger."
+)
+
+
+def _meta(title):
+    tags = [
+        f'<meta property="og:title" content="{escape(title)}">',
+        f'<meta property="og:description" content="{escape(OG_DESCRIPTION)}">',
+        '<meta property="og:type" content="website">',
+        '<meta name="twitter:card" content="summary_large_image">',
+        f'<meta name="description" content="{escape(OG_DESCRIPTION)}">',
+    ]
+    if PUBLIC_URL:
+        tags.append(
+            f'<meta property="og:image" content="{escape(PUBLIC_URL.rstrip("/"))}/og-image.png">'
+        )
+    return "".join(tags)
+
+
 def page(title, body, active="chains"):
     footer = f'<p class="derived" id="derived-footer">{escape(DERIVED_NOTE)}</p>'
+    hosted = (
+        f'<div class="hosted" id="hosted-banner">{escape(HOSTED_NOTE)}</div>' if HOSTED else ""
+    )
     return HTMLResponse(
         f"<!doctype html><html><head><meta charset='utf-8'><title>{escape(title)}</title>"
-        f"<style>{STYLE}</style></head><body>{nav(active)}{body}{footer}</body></html>"
+        f"{_meta(title)}"
+        f"<style>{STYLE}</style></head><body>{hosted}{nav(active)}{body}{footer}</body></html>"
     )
 
 
@@ -255,6 +363,25 @@ def view_ledger(ledger_id: str, verified: int = 0):
             + "</div>"
         )
 
+    # The hosted image has no browser, so it cannot render a PDF on demand; point
+    # at the committed flagship packet instead of offering a button that 500s.
+    pdf_button = (
+        '<a href="/sample-packet.pdf"><button type="button" class="ghost" id="export-pdf">'
+        "Sample packet PDF</button></a>"
+        if HOSTED
+        else f'<a href="/ledger/{escape(ledger_id)}/export.pdf">'
+        '<button type="button" class="ghost" id="export-pdf">Export PDF</button></a>'
+    )
+    is_forged = bool(ledger.get("tampered_demo"))
+    tamper_note = (
+        '<div class="banner bad" id="tamper-note"><strong>This is a deliberately '
+        "forged copy.</strong><br>Created by the &ldquo;Tamper a copy&rdquo; button so "
+        "verification can be seen failing. The original ledger it was copied from is "
+        "untouched.</div>"
+        if is_forged
+        else ""
+    )
+
     link_by_index = {link["index"]: link for link in chain["links"]}
     rows = "".join(
         f"""<tr data-event-row data-index="{index}" data-event-type="{escape(event['type'])}">
@@ -285,9 +412,12 @@ def view_ledger(ledger_id: str, verified: int = 0):
           </form>
           <a href="/ledger/{escape(ledger_id)}/export.json">
             <button type="button" class="ghost" id="export-json">Export JSON</button></a>
-          <a href="/ledger/{escape(ledger_id)}/export.pdf">
-            <button type="button" class="ghost" id="export-pdf">Export PDF</button></a>
+          {pdf_button}
+          <form method="post" action="/ledger/{escape(ledger_id)}/tamper">
+            <button type="submit" class="ghost" id="tamper-ledger">Tamper a copy</button>
+          </form>
         </div>
+        {tamper_note}
         <h2>{len(ledger['events'])} events</h2>
         <table id="chain-table"><tr><th>#</th><th>Event</th><th>Timestamp</th>
         <th>Prev hash</th><th>Event hash</th><th>Link</th></tr>{rows}</table>""",
@@ -361,6 +491,35 @@ def mandates_index():
             f'<div class="k">{escape(label)}</div></div>'
         )
 
+    hero = (
+        '<div class="hero">'
+        f'<div class="tile"><div class="n">{counts.get("total", 0)}</div>'
+        '<div class="k">mandates governed</div></div>'
+        f'<div class="tile"><div class="n">'
+        f'{sum(1 for r in rows if r["last_outcome"] == "COMPLETED")}</div>'
+        '<div class="k">purchases completed</div></div>'
+        f'<div class="tile"><div class="n">{counts.get("blocked_attempts", 0)}</div>'
+        '<div class="k">carts blocked</div></div>'
+        "</div>"
+    )
+    run_button = (
+        '<div class="actions" style="margin:0 0 22px">'
+        '<form method="post" action="/demo/run">'
+        '<button type="submit" id="run-demo">Run the agent against the live store</button>'
+        "</form>"
+        f'<a href="{escape(STOREFRONT_URL or "#")}/_admin"><button type="button" class="ghost" '
+        'id="open-drift">Flip the store\'s drift toggle</button></a>'
+        '<a href="/try"><button type="button" class="ghost">Try your own request</button></a>'
+        "</div>"
+    ) if HOSTED or STOREFRONT_URL else (
+        '<div class="actions" style="margin:0 0 22px">'
+        '<form method="post" action="/demo/run">'
+        '<button type="submit" id="run-demo">Run the agent against the live store</button>'
+        "</form>"
+        '<a href="/try"><button type="button" class="ghost">Try your own request</button></a>'
+        "</div>"
+    )
+
     tiles = "".join(
         [
             tile("total", "mandates"),
@@ -392,6 +551,7 @@ def mandates_index():
         "Mandates",
         "<h1>Mandates</h1>"
         "<p class='sub'>Lifecycle of every authorization, derived from the ledger.</p>"
+        f"{hero}{run_button}"
         f'<div class="tiles" id="mandate-summary">{tiles}</div>'
         "<table id=\"mandate-list\"><tr><th>Mandate</th><th>Merchant</th><th>Items</th>"
         "<th>Ceiling</th><th>Window ends</th><th>Status</th><th>Last attempt</th>"
@@ -497,3 +657,226 @@ def mandate_detail(mandate_hash: str):
 
 def _rows_kv(pairs):
     return "".join(f"<tr><th>{escape(k)}</th><td>{v}</td></tr>" for k, v in pairs)
+
+
+# --- hosted interactive surfaces --------------------------------------------
+#
+# Each of these does real work per click: the agent runs, the gate runs, a ledger
+# is written. None of them can reach Prava or spend money -- the hosted image has
+# no Prava client and the run stops at the gate verdict.
+
+from fastapi import Form, Request  # noqa: E402
+from fastapi.responses import FileResponse as _FileResponse  # noqa: E402
+
+EXPORTS = os.environ.get("MANDATE_GUARD_EXPORT_DIR", EXPORT_DIR)
+
+
+def _too_many(active):
+    return page(
+        "Slow down",
+        "<h1>Easy there</h1><p class='sub'>This demo allows "
+        f"{RATE_LIMIT_PER_MINUTE} runs per minute per visitor. Try again shortly.</p>"
+        "<p><a href='/mandates'>Back to the dashboard</a></p>",
+        active=active,
+    )
+
+
+@app.post("/demo/run")
+def demo_run(request: Request):
+    """Run the built-in demo mandate against the LIVE store, right now.
+
+    Flip the drift toggle on the storefront first and the agent reads the
+    perturbed price for real -- the gate then refuses the visitor's own
+    perturbation rather than a scripted one.
+    """
+    if rate_limited(request):
+        return _too_many("mandates")
+
+    from backend.demo_headless import run_demo_request
+
+    result = run_demo_request(LEDGER_DIR, EXPORTS, storefront_url=STOREFRONT_URL)
+    return RedirectResponse(f"/ledger/{result['ledger_id']}", status_code=303)
+
+
+@app.get("/try", response_class=HTMLResponse)
+def try_form(error: str = ""):
+    from backend.demo_headless import MAX_INTENT_CHARS
+
+    error_html = f'<div class="banner bad" id="try-error">{escape(error)}</div>' if error else ""
+    return page(
+        "Try your own request",
+        f"""<h1>Try your own request</h1>
+        <p class="sub">Your sentence goes through the whole fence: a language model
+        proposes constraints, deterministic code accepts or rejects them, and the gate
+        checks the resulting cart against the mandate. No payment is made.</p>
+        {error_html}
+        <form method="post" action="/try" id="try-form">
+          <textarea id="intent" name="intent_text" rows="3"
+            maxlength="{MAX_INTENT_CHARS}"
+            placeholder="Buy a bag of house blend and two boxes of filters from Beanline, under $30."
+          ></textarea>
+          <p style="margin-top:12px"><button type="submit" id="try-submit">Compile and verify</button></p>
+        </form>
+        <p class="sub">The store stocks <code>BL-HOUSE-12</code> (House Blend),
+        <code>BL-FILTER-100</code> (Filters) and <code>BL-DECAF-12</code> (Decaf).
+        Asking for something it does not stock, or setting a budget the cart cannot
+        meet, is a perfectly good thing to try.</p>""",
+        active="try",
+    )
+
+
+@app.post("/try", response_class=HTMLResponse)
+def try_submit(request: Request, intent_text: str = Form("")):
+    if rate_limited(request):
+        return _too_many("try")
+
+    from backend.demo_headless import RequestTooLong, run_user_request
+
+    try:
+        stages = run_user_request(intent_text, LEDGER_DIR, EXPORTS, storefront_url=STOREFRONT_URL)
+    except RequestTooLong as exc:
+        return RedirectResponse(f"/try?error={escape(str(exc))}", status_code=303)
+
+    return page(f"Result — {intent_text[:40]}", _render_try(stages), active="try")
+
+
+def _pre(value):
+    import json as _json
+
+    return f"<pre>{escape(_json.dumps(value, indent=2, sort_keys=True))}</pre>"
+
+
+def _render_try(stages):
+    """Show the fence working: what the model said, what the validator did, what shipped."""
+    raw = stages["raw_extraction"]
+
+    if stages["extraction_error"]:
+        col_model = f'<p class="missing">{escape(stages["extraction_error"])}</p>'
+    else:
+        col_model = _pre(raw)
+
+    if stages["validation_errors"]:
+        rows = "".join(
+            f"<tr><td class='mono'>{escape(field)}</td><td>{escape(reason)}</td></tr>"
+            for field, reason in sorted(stages["validation_errors"].items())
+        )
+        col_validator = (
+            '<p><span class="chip BLOCKED">REJECTED</span></p>'
+            f"<table><tr><th>Field</th><th>Why</th></tr>{rows}</table>"
+        )
+        col_mandate = (
+            '<p class="missing">No mandate was created. The model\'s output never '
+            "became an authorization, so nothing downstream could act on it.</p>"
+        )
+    elif stages["accepted"]:
+        col_validator = (
+            '<p><span class="chip COMPLETED">ACCEPTED</span></p>'
+            "<p class='sub'>Normalized and checked: money as 2dp decimal strings, https "
+            "merchant, known product ids, positive quantities, no unknown fields.</p>"
+        )
+        col_mandate = _pre(stages["mandate"]["constraints"])
+    else:
+        col_validator = '<p class="missing">Not reached.</p>'
+        col_mandate = '<p class="missing">Not reached.</p>'
+
+    fence = f"""<div class="fence">
+      <div class="col"><h3>1 · Model proposes</h3>{col_model}</div>
+      <div class="col"><h3>2 · Code decides</h3>{col_validator}</div>
+      <div class="col"><h3>3 · Mandate</h3>{col_mandate}</div>
+    </div>"""
+
+    if stages["validation_errors"]:
+        banner = (
+            '<div class="banner bad" id="try-outcome"><strong>Rejected by the validator.'
+            "</strong><br>This is the fence doing its job: a model wrote something the "
+            "rules do not accept, so it never became an authorization.</div>"
+        )
+        tail = ""
+    elif stages["extraction_error"]:
+        banner = (
+            '<div class="banner idle" id="try-outcome">The extraction step did not return '
+            "usable output. Nothing downstream ran.</div>"
+        )
+        tail = ""
+    elif stages["agent_error"]:
+        banner = (
+            '<div class="banner idle" id="try-outcome"><strong>The agent could not build a '
+            f"cart.</strong><br>{escape(stages['agent_error'])}</div>"
+        )
+        tail = ""
+    else:
+        verdict = stages["verdict"]
+        passed = verdict["verdict"] == "PASS"
+        banner = (
+            f'<div class="banner {"ok" if passed else "bad"}" id="try-outcome">'
+            f'<strong>Gate verdict: {verdict["verdict"]}</strong><br>'
+            + (
+                "Every rule passed. In the full system a Prava session would be created "
+                "here; the hosted demo stops at the gate."
+                if passed
+                else "Failed rules: " + escape(", ".join(verdict["failed_rule_ids"]))
+                + ". No payment session would be created."
+            )
+            + "</div>"
+        )
+        rules = "".join(
+            f"<tr><td class='mono'>{escape(r['rule_id'])}</td><td>{escape(r['name'])}</td>"
+            f"<td><span class='chip {'COMPLETED' if r['pass'] else 'BLOCKED'}'>"
+            f"{'PASS' if r['pass'] else 'FAIL'}</span></td>"
+            f"<td class='mono'>{escape(str(r['expected']))}</td>"
+            f"<td class='mono'>{escape(str(r['actual']))}</td></tr>"
+            for r in verdict["results"]
+        )
+        tail = (
+            "<h2>Gate</h2><table id='try-rules'><tr><th>Rule</th><th>Name</th><th>Result</th>"
+            f"<th>Expected</th><th>Actual</th></tr>{rules}</table>"
+            f"<p><a href='/ledger/{escape(stages['ledger_id'] or '')}'>"
+            "See the evidence chain for this run &rarr;</a></p>"
+        )
+
+    drift_note = (
+        f"<p class='sub'>Store drift at run time: <strong>{escape(stages['drift'])}</strong> "
+        f"(catalogue read {escape(stages['catalog_source'])}).</p>"
+    )
+    return (
+        f"<h1>Result</h1><p class='sub'>&ldquo;{escape(stages['intent_text'])}&rdquo;</p>"
+        f"{drift_note}{banner}{fence}{tail}"
+        "<p><a href='/try'>Try another &rarr;</a></p>"
+    )
+
+
+@app.post("/ledger/{ledger_id}/tamper")
+def tamper(ledger_id: str, request: Request):
+    """Forge a COPY of this ledger so a visitor can watch verification fail.
+
+    Originals and seeds are never modified. The copy is marked and labelled.
+    """
+    if rate_limited(request):
+        return _too_many("chains")
+
+    path = ledger_path(ledger_id)
+    if not os.path.exists(path):
+        return page("Not found", "<h1>No such ledger</h1>")
+
+    from backend.demo_headless import tamper_copy
+
+    new_id, forged_event = tamper_copy(load_ledger(path), LEDGER_DIR)
+    return RedirectResponse(f"/ledger/{new_id}?verified=1&forged={forged_event}", status_code=303)
+
+
+@app.get("/og-image.png")
+def og_image():
+    shot = os.path.join(REPO_ROOT, "evidence", "sample", "screenshots", "dashboard.png")
+    if not os.path.exists(shot):
+        return page("Not found", "<h1>No image</h1>")
+    return _FileResponse(shot, media_type="image/png")
+
+
+@app.get("/sample-packet.pdf")
+def sample_packet():
+    """The committed flagship packet. The hosted image cannot render a PDF."""
+    if not os.path.exists(SAMPLE_PDF):
+        return page("Not found", "<h1>No sample packet</h1>")
+    return _FileResponse(
+        SAMPLE_PDF, media_type="application/pdf", filename="mandate-guard-evidence-packet.pdf"
+    )

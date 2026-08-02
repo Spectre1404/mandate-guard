@@ -1,0 +1,15 @@
+# Hosted demo image ONLY. Deliberately smaller than requirements.txt.
+#
+# Absent on purpose:
+#   requests    — the Prava client cannot be constructed, so the container
+#                 cannot reach api.prava.space by construction, not by config.
+#   playwright  — no browser, no checkout execution, no PDF rendering on the
+#                 server. The hosted demo stops at the gate verdict.
+#
+# openai is the one permitted client library: "Try your own request" runs a live
+# gpt-5-mini extraction. No Prava key exists in this environment.
+
+fastapi==0.141.1
+uvicorn==0.52.0
+python-multipart==0.0.32
+openai==2.52.0
