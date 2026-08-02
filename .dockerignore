@@ -10,8 +10,10 @@ scripts
 evidence/demo
 evidence/ledgers
 evidence/exports
-evidence/sample/screenshots
-!evidence/sample/screenshots/dashboard.png
+# NOT excluding evidence/sample/screenshots: the Dockerfile COPYs dashboard.png
+# from it for the OG image, and a negation inside an excluded directory is exactly
+# the kind of thing that fails only in the build I cannot run locally. The whole
+# directory is under 400KB.
 README.md
 SPEC.md
 DISCLOSURE.md
