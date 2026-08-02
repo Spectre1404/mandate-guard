@@ -83,15 +83,33 @@ RATE_LIMIT_PER_MINUTE = 10
 _HITS = {}
 
 
+def client_key(request):
+    """Best available per-visitor identifier.
+
+    Behind a reverse proxy, `request.client.host` is the PROXY's address, and on a
+    fleet-based edge that address varies per request -- which silently defeated the
+    limiter entirely in production. The forwarded header is the visitor's own
+    address, so prefer it and fall back to the socket peer only when it is absent.
+
+    Spoofable by a determined caller, which is fine: this throttles accidental
+    hammering and casual abuse of an endpoint that costs money per call. It is not
+    a security control and is not presented as one.
+    """
+    forwarded = request.headers.get("x-forwarded-for", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return (request.client.host if request.client else "?") or "?"
+
+
 def rate_limited(request):
-    """Crude fixed-window limiter, per IP, in memory.
+    """Crude fixed-window limiter, per visitor, in memory.
 
     Adequate for a single-instance demo and honestly labelled as such: it is a
     courtesy throttle, not a security control.
     """
     import time
 
-    ip = (request.client.host if request.client else "?") or "?"
+    ip = client_key(request)
     now = time.time()
     hits = [t for t in _HITS.get(ip, []) if now - t < 60]
     if len(hits) >= RATE_LIMIT_PER_MINUTE:

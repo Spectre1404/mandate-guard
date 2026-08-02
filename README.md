@@ -9,10 +9,14 @@ contested.
 
 > ### Evaluating this in 90 seconds
 >
-> 1. **Demo video** — _(link added at submission)_
-> 2. **The artifact** — [flagship evidence packet (PDF)](evidence/sample/evidence-packet.pdf), from a
+> 1. **Live demo** — **https://mandate-guard-umry.onrender.com** — browse the mandate
+>    dashboard, run the agent against the [live store](https://mandate-guard-storefront.onrender.com),
+>    submit your own request, and break a hash chain on purpose. No payment is made;
+>    the hosted demo stops at the gate verdict.
+> 2. **Demo video** — _(link added at submission)_
+> 3. **The artifact** — [flagship evidence packet (PDF)](evidence/sample/evidence-packet.pdf), from a
 >    real Prava sandbox purchase.
-> 3. **One command, no keys required:**
+> 4. **One command, no keys required:**
 >    ```
 >    .venv/bin/python scripts/run_demo.py blocked --no-llm
 >    ```

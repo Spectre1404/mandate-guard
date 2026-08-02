@@ -379,3 +379,41 @@ def test_hosted_swaps_the_pdf_button_for_the_sample_packet(client, ui):
 
     assert "/sample-packet.pdf" in body
     assert "/export.pdf" not in body
+
+
+# --- limiter identity behind a proxy ----------------------------------------
+
+
+def test_the_limiter_keys_on_the_forwarded_address_not_the_proxy(client):
+    """In production the socket peer is a proxy whose address varies per request.
+
+    Keying on it meant the limiter never accumulated and never fired on the live
+    deployment, leaving a paid-model endpoint unthrottled on a public URL.
+    """
+    headers = {"X-Forwarded-For": "203.0.113.7, 10.0.0.1"}
+    for _ in range(10):
+        client.post("/demo/run", headers=headers, follow_redirects=False)
+
+    throttled = client.post("/demo/run", headers=headers, follow_redirects=True)
+    assert "Easy there" in throttled.text
+
+    # A different visitor is unaffected by the first one's budget.
+    other = client.post(
+        "/demo/run", headers={"X-Forwarded-For": "198.51.100.4"}, follow_redirects=False
+    )
+    assert other.status_code == 303
+
+
+def test_client_key_prefers_the_forwarded_header():
+    from types import SimpleNamespace
+
+    from ledger_ui.app import client_key
+
+    proxied = SimpleNamespace(
+        headers={"x-forwarded-for": "203.0.113.7, 10.0.0.1"},
+        client=SimpleNamespace(host="10.9.9.9"),
+    )
+    direct = SimpleNamespace(headers={}, client=SimpleNamespace(host="192.0.2.5"))
+
+    assert client_key(proxied) == "203.0.113.7"
+    assert client_key(direct) == "192.0.2.5"
